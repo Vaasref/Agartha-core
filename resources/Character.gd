@@ -24,6 +24,7 @@ func _init(_name:String="", _tag:String="", _color=null):
 		name = _name
 	if _tag:
 		tag = _tag
+		Agartha.store.set(tag, self)
 	if _color:
 		color = _color
 
