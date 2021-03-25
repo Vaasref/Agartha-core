@@ -75,9 +75,19 @@ func prune_back_stack():
 
 ############## Saving and Loading
 
-func save_store(save_name):
+func save_store(save_name, save_image:Image=null):
 	var save = StoreSave.new()
+	
 	save.state_stack = self.state_stack
+	save.current_state = self.current_state
+	
+	save.game_version = Agartha.Settings.get("agartha/application/game_version")
+	save.save_script_compatibility_code = save.get_script_compatibility_code()
+	save.save_compatibility_code = Agartha.Settings.get("agartha/saves/compatibility/compatibility_code")
+	
+	if not save_image:
+		save_image = get_tree().get_root().get_texture().get_data()
+	save.encoded_image = save.encode_image(save_image)
 
 	var path = "%s%s%s" % [save_folder_path, save_name, save_extension]
 	
@@ -88,6 +98,21 @@ func save_store(save_name):
 func load_store(save_name):
 	var path = "%s%s%s" % [save_folder_path, save_name, save_extension]
 	var save = load(path) as StoreSave
+	
+	var error = false
+	if save.game_version != Agartha.Settings.get("agartha/application/game_version") and not Agartha.Settings.get("agartha/saves/compatibility/load_on_different_game_version"):
+		push_error("Save loaded is not compatible : different game version")
+		error = true
+	if save.save_script_compatibility_code != save.get_script_compatibility_code() and not Agartha.Settings.get("agartha/saves/compatibility/force_load_on_different_storesave_version"):
+		push_error("Save loaded is not compatible : different script compatibility code")
+		error = true
+	if save.save_compatibility_code != Agartha.Settings.get("agartha/saves/compatibility/compatibility_code"):
+		push_error("Save loaded is not compatible : different compatibility code")
+		error = true
+	
+	if error:
+		print("Save loading aborted.")
+		return
 	
 	self.state_stack = []
 	for s in save.state_stack:

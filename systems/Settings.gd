@@ -128,7 +128,7 @@ func update_persistent():
 
 func init_properties():
 	var property_info
-	
+	init_compatibility_code()
 	print("Initializing Agartha settings.")
 	_init_properties(properties_infos)
 	ProjectSettings.set_order(properties_infos.keys()[0], 1)
@@ -145,7 +145,13 @@ func _init_property(property_info:Dictionary):
 		ProjectSettings.set_setting(property_info.name, property_info.default)
 	ProjectSettings.add_property_info(property_info)
 	ProjectSettings.set_initial_value(property_info.name, property_info.default)
-	
+
+func init_compatibility_code():
+	print("Randomizing compatibility_code default")
+	randomize()
+	properties_infos["agartha/saves/compatibility/compatibility_code"]["default"] = str(randi()).md5_text().substr(0, 5)
+	if not ProjectSettings.has_setting("agartha/saves/compatibility/compatibility_code"):
+		ProjectSettings.set_setting("agartha/saves/compatibility/compatibility_code", str(randi()).md5_text().substr(0, 5))
 
 const properties_infos:Dictionary = {
 	"agartha/application/game_version": {
@@ -195,6 +201,21 @@ const properties_infos:Dictionary = {
 		"type": TYPE_DICTIONARY,
 		"hint": PROPERTY_HINT_NONE,
 		"default": {}
+	},
+	"agartha/saves/compatibility/compatibility_code": {
+		"type": TYPE_STRING,
+		"hint": PROPERTY_HINT_NONE,
+		"default": ""
+	},
+	"agartha/saves/compatibility/load_on_different_game_version": {
+		"type": TYPE_BOOL,
+		"hint": PROPERTY_HINT_NONE,
+		"default": true
+	},
+	"agartha/saves/compatibility/force_load_on_different_storesave_version": {
+		"type": TYPE_BOOL,
+		"hint": PROPERTY_HINT_NONE,
+		"default": false
 	},
 	"agartha/saves/compress_savefiles": {
 		"type": TYPE_BOOL,
