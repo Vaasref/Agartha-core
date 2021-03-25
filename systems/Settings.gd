@@ -78,6 +78,8 @@ func get(property:String, default_value=null, default_override_settings:bool=tru
 	elif ProjectSettings.has_setting(property):
 		return ProjectSettings.get_setting(property)
 	elif property in properties_infos:
+		if properties_infos[property].has("hard_default"):
+			return properties_infos[property].hard_default
 		return properties_infos[property].default
 	
 	elif not default_override_settings and not default_value == null:
@@ -137,7 +139,9 @@ func _init_properties(properties_infos:Dictionary):
 		_init_property(properties_infos[k])
 
 func _init_property(property_info:Dictionary):
-	if not ProjectSettings.has_setting(property_info.name):
+	if property_info.has("hard_default"):
+		ProjectSettings.set_setting(property_info.name, property_info.hard_default)
+	elif not ProjectSettings.has_setting(property_info.name):
 		ProjectSettings.set_setting(property_info.name, property_info.default)
 	ProjectSettings.add_property_info(property_info)
 	ProjectSettings.set_initial_value(property_info.name, property_info.default)
@@ -214,5 +218,11 @@ const properties_infos:Dictionary = {
 		"type": TYPE_BOOL,
 		"hint": PROPERTY_HINT_NONE,
 		"default": true,
+	},
+	"autoload/Agartha": {
+		"type": TYPE_STRING,
+		"hint": PROPERTY_HINT_NONE,
+		"default": "res://addons/Agartha/Agartha.tscn",
+		"hard_default": "*res://addons/Agartha/Agartha.tscn",
 	}
 	}
