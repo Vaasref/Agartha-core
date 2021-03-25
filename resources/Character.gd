@@ -24,6 +24,7 @@ func _init(_name:String="", _tag:String="", _color=null):
 		name = _name
 	if _tag:
 		tag = _tag
+		Agartha.store.set(tag, self)
 	if _color:
 		color = _color
 
@@ -44,7 +45,7 @@ func _set_color(value):
 	if value is String:
 		color = Color(value)
 	elif value is Color:
-		color = Color(value.r, value.g. value.b, value.a)
+		color = Color(value.r, value.g, value.b, value.a)
 
 
 ## Setget magic and duplicate

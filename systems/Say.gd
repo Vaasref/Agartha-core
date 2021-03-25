@@ -7,7 +7,7 @@ func action(character, text:String, parameters:Dictionary={}):
 		if character is String and Agartha.store.has(character):
 			character = Agartha.store.get(character)
 		if character is Resource:#no elif here as it also test if the character loaded from the store is of the right type
-			character_say_parameters = character.character_say_parameters
+			character_say_parameters = character.say_parameters
 		else:
 			character = null
 	
