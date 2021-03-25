@@ -148,6 +148,18 @@ func _init_property(property_info:Dictionary):
 	
 
 const properties_infos:Dictionary = {
+	"agartha/application/game_version": {
+		"type": TYPE_STRING,
+		"hint": PROPERTY_HINT_PLACEHOLDER_TEXT ,
+		"hint_string": "Version number",
+		"default": "0.0.0"
+	},
+	"agartha/application/agartha_version": {
+		"type": TYPE_STRING,
+		"hint": PROPERTY_HINT_NONE ,
+		"default": "0.0.0",
+		"hard_default": "0.0.0"
+	},
 	"agartha/dialogues/skip_delay": {
 		"type": TYPE_REAL,
 		"hint": PROPERTY_HINT_RANGE,
