@@ -23,10 +23,13 @@ func get_user_path(property:String, filename:String="", tres_to_res:bool=true):
 	else:
 		path_format = "user://%s"
 	var path:String = get(property)
-	path = path.trim_suffix("/") + "/" + filename
-	path = path_format % path.trim_prefix("user://").trim_prefix("res://")
-	if tres_to_res and path.ends_with(".tres"):
-		path = path.trim_suffix(".tres") + ".res"
+	path = path.trim_suffix("/") + "/"
+	path = path.trim_prefix("user://").trim_prefix("res://")
+	if filename:
+		path = path + filename
+		if tres_to_res and path.ends_with(".tres"):
+			path = path.trim_suffix(".tres") + ".res"
+	path = path_format % path
 	return path
 
 
