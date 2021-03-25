@@ -196,6 +196,16 @@ const properties_infos:Dictionary = {
 		"hint": PROPERTY_HINT_NONE,
 		"default": {}
 	},
+	"agartha/saves/compress_savefiles": {
+		"type": TYPE_BOOL,
+		"hint": PROPERTY_HINT_NONE,
+		"default": true
+	},
+	"agartha/saves/compress_permanent_data_file": {
+		"type": TYPE_BOOL,
+		"hint": PROPERTY_HINT_NONE,
+		"default": true
+	},
 	"agartha/paths/scenes/scene_aliases": {
 		"type": TYPE_DICTIONARY,
 		"hint": PROPERTY_HINT_NONE,
@@ -206,20 +216,10 @@ const properties_infos:Dictionary = {
 		"hint": PROPERTY_HINT_DIR,
 		"default": "res://saves/"
 	},
-	"agartha/paths/saves/compressed_savefiles": {
-		"type": TYPE_BOOL,
-		"hint": PROPERTY_HINT_NONE,
-		"default": true
-	},
 	"agartha/paths/saves/permanent_data_folder": {
 		"type": TYPE_STRING,
 		"hint": PROPERTY_HINT_DIR,
 		"default": "res://saves/"
-	},
-	"agartha/paths/saves/compressed_permanent_data_file": {
-		"type": TYPE_BOOL,
-		"hint": PROPERTY_HINT_NONE,
-		"default": true
 	},
 	"agartha/paths/shard_libraries_folder": {
 		"type": TYPE_STRING,

@@ -10,7 +10,7 @@ var current_state_id:int = 0
 var current_state:Array = []
 
 func init(default_state=null):
-	var compress_saves = Agartha.Settings.get("agartha/paths/saves/compressed_permanent_data_file")
+	var compress_saves = Agartha.Settings.get("agartha/saves/compress_permanent_data_file")
 	if compress_saves:
 		save_extension = ".res"
 	else:

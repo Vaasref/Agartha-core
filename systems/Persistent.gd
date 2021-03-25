@@ -6,7 +6,7 @@ var path = "res://saves/persistent.tres"
 
 
 func init():
-	var compress = Agartha.Settings.get("agartha/paths/saves/compressed_permanent_data_file")
+	var compress = Agartha.Settings.get("agartha/saves/compress_permanent_data_file")
 	path = Agartha.Settings.get_user_path("agartha/paths/saves/permanent_data_folder", "persistent.tres", compress)
 	load_persistent()
 
