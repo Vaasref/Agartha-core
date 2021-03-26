@@ -147,6 +147,12 @@ const properties_infos:Dictionary = {
 		"hint_string": "Pre-step,Post-step",
 		"default": 0
 	},
+	"agartha/timeline/maximum_rollback_steps": {
+		"type": TYPE_INT,
+		"hint": PROPERTY_HINT_RANGE,
+		"hint_string": "-1, 50, or_greater",
+		"default": 10
+	},
 	"agartha/dialogues/skip_delay": {
 		"type": TYPE_REAL,
 		"hint": PROPERTY_HINT_RANGE,

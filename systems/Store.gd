@@ -10,6 +10,7 @@ var current_state_id:int = 0
 var current_state:Array = []
 
 func init(default_state=null):
+	stack_size_max = Agartha.Settings.get("agartha/timeline/maximum_rollback_steps")
 	var compress_saves = Agartha.Settings.get("agartha/paths/saves/compressed_permanent_data_file")
 	if compress_saves:
 		save_extension = ".res"
