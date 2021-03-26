@@ -23,10 +23,13 @@ func get_user_path(property:String, filename:String="", tres_to_res:bool=true):
 	else:
 		path_format = "user://%s"
 	var path:String = get(property)
-	path = path.trim_suffix("/") + "/" + filename
-	path = path_format % path.trim_prefix("user://").trim_prefix("res://")
-	if tres_to_res and path.ends_with(".tres"):
-		path = path.trim_suffix(".tres") + ".res"
+	path = path.trim_suffix("/") + "/"
+	path = path.trim_prefix("user://").trim_prefix("res://")
+	if filename:
+		path = path + filename
+		if tres_to_res and path.ends_with(".tres"):
+			path = path.trim_suffix(".tres") + ".res"
+	path = path_format % path
 	return path
 
 
@@ -42,12 +45,12 @@ func get_parameter_list(property:String, value:Dictionary={}, other_default:Dict
 		var concat = {}
 		for k in value.keys():
 			concat[k] = value[k]
-		
+
 		if other_default:
 			for k in other_default.keys():
 				if not k in concat:
 					concat[k] = other_default[k]
-		
+
 		if property:
 			if property in settings_list:
 				for k in settings_list[property].keys():
@@ -58,7 +61,7 @@ func get_parameter_list(property:String, value:Dictionary={}, other_default:Dict
 				for k in project_settings_default.keys():
 					if not k in concat:
 						concat[k] = project_settings_default[k]
-		
+
 		return concat
 
 
@@ -68,15 +71,17 @@ func get_parameter_list(property:String, value:Dictionary={}, other_default:Dict
 func get(property:String, default_value=null, default_override_settings:bool=true):
 	if property in settings_list:
 		return settings_list[property]
-	
+
 	elif default_override_settings and not default_value == null:
 		return default_value
-	
+
 	elif ProjectSettings.has_setting(property):
 		return ProjectSettings.get_setting(property)
 	elif property in properties_infos:
+		if properties_infos[property].has("hard_default"):
+			return properties_infos[property].hard_default
 		return properties_infos[property].default
-	
+
 	elif not default_override_settings and not default_value == null:
 		return default_value
 	return null
@@ -123,7 +128,7 @@ func update_persistent():
 
 func init_properties():
 	var property_info
-	
+	init_compatibility_code()
 	print("Initializing Agartha settings.")
 	_init_properties(properties_infos)
 	ProjectSettings.set_order(properties_infos.keys()[0], 1)
@@ -134,13 +139,33 @@ func _init_properties(properties_infos:Dictionary):
 		_init_property(properties_infos[k])
 
 func _init_property(property_info:Dictionary):
-	if not ProjectSettings.has_setting(property_info.name):
+	if property_info.has("hard_default"):
+		ProjectSettings.set_setting(property_info.name, property_info.hard_default)
+	elif not ProjectSettings.has_setting(property_info.name):
 		ProjectSettings.set_setting(property_info.name, property_info.default)
 	ProjectSettings.add_property_info(property_info)
 	ProjectSettings.set_initial_value(property_info.name, property_info.default)
-	
+
+func init_compatibility_code():
+	print("Randomizing compatibility_code default")
+	randomize()
+	properties_infos["agartha/saves/compatibility/compatibility_code"]["default"] = str(randi()).md5_text().substr(0, 5)
+	if not ProjectSettings.has_setting("agartha/saves/compatibility/compatibility_code"):
+		ProjectSettings.set_setting("agartha/saves/compatibility/compatibility_code", str(randi()).md5_text().substr(0, 5))
 
 const properties_infos:Dictionary = {
+	"agartha/application/game_version": {
+		"type": TYPE_STRING,
+		"hint": PROPERTY_HINT_PLACEHOLDER_TEXT ,
+		"hint_string": "Version number",
+		"default": "0.0.0"
+	},
+	"agartha/application/agartha_version": {
+		"type": TYPE_STRING,
+		"hint": PROPERTY_HINT_NONE ,
+		"default": "0.0.0",
+		"hard_default": "0.0.0"
+	},
 	"agartha/timeline/roll_mode": {
 		"type": TYPE_INT,
 		"hint": PROPERTY_HINT_ENUM,
@@ -195,6 +220,31 @@ const properties_infos:Dictionary = {
 		"hint": PROPERTY_HINT_NONE,
 		"default": {}
 	},
+	"agartha/saves/compatibility/compatibility_code": {
+		"type": TYPE_STRING,
+		"hint": PROPERTY_HINT_NONE,
+		"default": ""
+	},
+	"agartha/saves/compatibility/load_on_different_game_version": {
+		"type": TYPE_BOOL,
+		"hint": PROPERTY_HINT_NONE,
+		"default": true
+	},
+	"agartha/saves/compatibility/force_load_on_different_storesave_version": {
+		"type": TYPE_BOOL,
+		"hint": PROPERTY_HINT_NONE,
+		"default": false
+	},
+	"agartha/saves/compress_savefiles": {
+		"type": TYPE_BOOL,
+		"hint": PROPERTY_HINT_NONE,
+		"default": true
+	},
+	"agartha/saves/compress_permanent_data_file": {
+		"type": TYPE_BOOL,
+		"hint": PROPERTY_HINT_NONE,
+		"default": true
+	},
 	"agartha/paths/scenes/scene_aliases": {
 		"type": TYPE_DICTIONARY,
 		"hint": PROPERTY_HINT_NONE,
@@ -205,20 +255,10 @@ const properties_infos:Dictionary = {
 		"hint": PROPERTY_HINT_DIR,
 		"default": "res://saves/"
 	},
-	"agartha/paths/saves/compressed_savefiles": {
-		"type": TYPE_BOOL,
-		"hint": PROPERTY_HINT_NONE,
-		"default": true
-	},
 	"agartha/paths/saves/permanent_data_folder": {
 		"type": TYPE_STRING,
 		"hint": PROPERTY_HINT_DIR,
 		"default": "res://saves/"
-	},
-	"agartha/paths/saves/compressed_permanent_data_file": {
-		"type": TYPE_BOOL,
-		"hint": PROPERTY_HINT_NONE,
-		"default": true
 	},
 	"agartha/paths/shard_libraries_folder": {
 		"type": TYPE_STRING,
@@ -229,5 +269,11 @@ const properties_infos:Dictionary = {
 		"type": TYPE_BOOL,
 		"hint": PROPERTY_HINT_NONE,
 		"default": true,
+	},
+	"autoload/Agartha": {
+		"type": TYPE_STRING,
+		"hint": PROPERTY_HINT_NONE,
+		"default": "res://addons/Agartha/Agartha.tscn",
+		"hard_default": "*res://addons/Agartha/Agartha.tscn",
 	}
 	}
