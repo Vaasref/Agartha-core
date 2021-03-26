@@ -38,7 +38,7 @@ func _to_string():
 
 
 func bbcode():
-	return name_format_bbcode.format({'name':name, 'color':color}).format(properties)
+	return name_format_bbcode.format({'name':name, 'color':color.to_html()}).format(properties)
 
 
 func _set_color(value):
