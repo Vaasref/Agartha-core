@@ -27,10 +27,12 @@ func set_value(name, value):
 	save_persistent()
 
 
-func get_value(name):
+func get_value(name, default=null):
 	var output = persistent_state.get(name)
 	if output and output is Object and output.has_method('duplicate'):
 		output = output.duplicate(true)
+	if output == null and default != null:
+		output = default
 	return output
 
 func has_value(name):
