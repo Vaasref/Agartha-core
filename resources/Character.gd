@@ -68,8 +68,20 @@ func _init_property_list():
 			property_list[p.name] = true
 
 func duplicate(_deep:bool=true):
+	print("Duplicateing %s" % self)
 	var output = .duplicate(true)
 	output.script = self.script
+	output.name = self.name
+	output.tag = self.tag
+	output.color = self.color
+	
+	output.name_format = self.name_format
+	output.name_format_bbcode = self.name_format_bbcode
+	
+	output.show_parameters = self.show_parameters.duplicate(true)
+	output.say_parameters = self.say_parameters.duplicate(true)
+	output.hide_parameters = self.hide_parameters.duplicate(true)
+	output.properties = self.properties.duplicate()
 	for p in properties.keys():
 		if properties[p] is Object and properties[p].has_method('duplicate'):
 			output.properties[p] =  properties[p].duplicate(true)
