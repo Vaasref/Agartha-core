@@ -7,6 +7,9 @@ enum RollMode {
 export(int, "pre_step", "post_step") var roll_mode = RollMode.PreStep
 
 
+func init():
+	roll_mode = Agartha.Settings.get("agartha/timeline/roll_mode")
+
 
 func next_step():
 	if any_blocker():

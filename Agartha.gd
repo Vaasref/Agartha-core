@@ -39,6 +39,7 @@ var store = null setget ,get_store
 var stage:Node
 
 func _ready():
+	Timeline.init()
 	Store.init()
 	Persistent.init()
 	Settings.init()

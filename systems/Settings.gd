@@ -141,6 +141,12 @@ func _init_property(property_info:Dictionary):
 	
 
 const properties_infos:Dictionary = {
+	"agartha/timeline/roll_mode": {
+		"type": TYPE_INT,
+		"hint": PROPERTY_HINT_ENUM,
+		"hint_string": "Pre-step,Post-step",
+		"default": 0
+	},
 	"agartha/dialogues/skip_delay": {
 		"type": TYPE_REAL,
 		"hint": PROPERTY_HINT_RANGE,
