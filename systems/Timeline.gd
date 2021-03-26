@@ -18,7 +18,6 @@ func next_step():
 		Agartha.Store.store_current_state()
 		call_for_storing()
 		Agartha.Store.finish_step()
-		#print("Stored State Stack: \n%s" % [Agartha.Store.state_stack])
 		call_for_step()
 
 func roll(amount:int):
