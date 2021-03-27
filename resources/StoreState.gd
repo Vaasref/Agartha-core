@@ -29,7 +29,7 @@ func _set(property, value):
 	if not property_list:
 		_init_property_list()
 	if not property in property_list:
-		if value:
+		if value != null:
 			self['properties'][property] = value
 		else:
 			var _o = self['properties'].erase(property)
