@@ -43,3 +43,9 @@ func get_shard(shard_id:String, exact:bool=true):
 		else:
 			output += lib.get_shards(shard_id)
 	return output
+
+func get_sub_shard_ids(shard_id:String):
+	var output = []
+	for lib in shard_libraries:
+		output += lib.get_children_ids(shard_id)
+	return output

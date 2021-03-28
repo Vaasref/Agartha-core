@@ -163,6 +163,7 @@ func exit_dialogue():
 func call_fragment(fragment_name:String):
 	if is_active():
 		if self.has_method(fragment_name):
+			Agartha.History.log_fragment(self.name, fragment_name)
 			var entry = {'fragment_name':fragment_name, 'step_counter':0}
 			if execution_stack:
 				execution_stack[0].step_counter += 1
@@ -208,7 +209,20 @@ func condition(condition):
 
 func shard(shard_id:String, exact_id:bool=true, shard_library:Resource=null):
 	if is_running():
-		var shard = Agartha.ShardLibrarian.get_shard(shard_id, exact_id)
+		var shard = []
+		if shard_library:
+			if exact_id:
+				if shard_id in shard_library.shards:
+					shard = shard_library.shards[shard_id]
+			else:
+				shard = shard_library.get_shards(shard_id)
+		else:
+			shard = Agartha.ShardLibrarian.get_shard(shard_id, exact_id)
+		if shard:
+			if exact_id:
+				Agartha.History.log_shard(shard_id)
+			else:
+				Agartha.History.log_shard(Agartha.ShardLibrarian.get_sub_shard_ids(shard_id))
 		for l in shard:
 			if is_running():
 				if l:
