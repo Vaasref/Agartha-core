@@ -15,11 +15,14 @@ export var name_format:String = "{name}"
 export var name_format_bbcode:String = "[color=#{color}]{name}[/color]"
 
 
-func _init(_name:String="", _tag:String="", _color=null):
+func _init():
 	properties = {}
 	show_parameters = {}
 	hide_parameters = {}
 	say_parameters = {}
+
+
+func init(_name:String="", _tag:String="", _color=null):
 	if _name:
 		name = _name
 	if _tag:
