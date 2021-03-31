@@ -71,7 +71,6 @@ func _init_property_list():
 			property_list[p.name] = true
 
 func duplicate(_deep:bool=true):
-	print("Duplicateing %s" % self)
 	var output = .duplicate(true)
 	output.script = self.script
 	output.name = self.name
