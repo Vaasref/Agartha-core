@@ -77,8 +77,9 @@ func load_scene(alias:String, path:String, signal_loading:bool=false):
 			if signal_loading:
 				Agartha.emit_signal("loading", NAN)
 			var scene = ResourceLoader.load(path, "PackedScene")
-			preloaded_scenes[alias] = scene
-			preloaded_scenes[preloaded_scenes[alias].resource_path] = preloaded_scenes[alias]
-			if signal_loading:
-				Agartha.emit_signal("loading", 1)
+			if scene:
+				preloaded_scenes[alias] = scene
+				preloaded_scenes[preloaded_scenes[alias].resource_path] = preloaded_scenes[alias]
+				if signal_loading:
+					Agartha.emit_signal("loading", 1)
 
