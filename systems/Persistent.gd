@@ -8,6 +8,9 @@ var path = "res://saves/persistent.tres"
 func init():
 	var compress = Agartha.Settings.get("agartha/saves/compress_permanent_data_file")
 	path = Agartha.Settings.get_user_path("agartha/paths/saves/permanent_data_folder", "persistent.tres", compress)
+	var dir = Directory.new()
+	if not dir.dir_exists(path.get_base_dir()):
+		dir.make_dir_recursive(path.get_base_dir())
 	load_persistent()
 
 
