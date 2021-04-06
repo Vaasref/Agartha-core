@@ -182,7 +182,7 @@ func call_fragment(fragment_name:String):
 		step()
 
 
-func start_dialogue(dialogue_name, fragment_name, scene_id:String=""):
+func start_dialogue(dialogue_name:String, fragment_name:String="", scene_id:String=""):
 	if is_running():
 		if scene_id:
 			var ok = Agartha.StageManager.change_scene(scene_id)
