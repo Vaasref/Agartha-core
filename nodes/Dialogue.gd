@@ -19,14 +19,18 @@ var execution_mode:int = ExecMode.Regular
 
 
 func _ready():
+	if not self.is_in_group("dialogues"):
+		self.add_to_group("dialogues")
 	Agartha.connect("start_dialogue", self, '_start_dialogue')
 	if autorun:
-		self.call_deferred('start')
+		Agartha.call_deferred('start_dialogue', name, "")
 
 
 func _start_dialogue(dialogue_name, fragment_name):
 	if dialogue_name == self.name:
 		start(fragment_name)
+	else:
+		exit_dialogue()
 
 
 func start(fragment_name:String=""):
