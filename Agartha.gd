@@ -17,6 +17,7 @@ onready var Ask:Node = get_node("Ask")
 onready var Menu:Node = get_node("Menu")
 
 signal start_dialogue(dialogue_name, fragment_name)
+signal scene_changed(scene_name)
 
 signal show(tag, parameters)
 signal hide(tag, parameters)

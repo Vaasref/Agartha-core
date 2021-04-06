@@ -25,6 +25,7 @@ func change_scene(scene_id, reload_scene:bool=false):
 		current_scene = new_scene.instance()
 		Agartha.store.set("_scene", current_scene_path)
 		Agartha.stage.add_child(current_scene)
+		Agartha.emit_signal('scene_changed', current_scene.name)
 		return true
 	return false
 
