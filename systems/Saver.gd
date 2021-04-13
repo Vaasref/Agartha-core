@@ -47,7 +47,7 @@ func save(save_filename:String, save_name:String="", save_image:Image=null, set_
 		push_error("Error when saving '%s'" % save_filename)
 	else:
 		if set_latest:
-			Agartha.Persistent.set("_latest_save", save_filename)
+			Agartha.Persistent.set_value("_latest_save", save_filename)
 		Agartha.emit_signal("saved")
 
 
