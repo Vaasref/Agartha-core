@@ -10,6 +10,8 @@ var current_scene_path:String
 func change_scene(scene_id, reload_scene:bool=false):
 	if current_scene_path == scene_id:
 		return false
+	if scene_id == null:
+		return false
 	var new_scene = get_scene(scene_id)
 	
 	if not new_scene:
