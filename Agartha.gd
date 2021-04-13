@@ -10,6 +10,7 @@ onready var ShardParser:Node = get_node("ShardParser")
 onready var MarkupParser:Node = get_node("MarkupParser")
 onready var ShardLibrarian:Node = get_node("ShardLibrarian")
 onready var History:Node = get_node("History")
+onready var Saver:Node = get_node("Saver")
 
 onready var Show_Hide:Node = get_node("Show_Hide")
 onready var Say:Node = get_node("Say")
@@ -33,7 +34,7 @@ signal menu(entries, parameters)
 signal menu_return(return_value)
 
 signal loading(progress)# progress can be either a float or a RIL. IF float, NAN is for undefined loading, [0:1[ represent the progress and 1 that the loading is finished.
-
+signal saved()
 
 var store = null setget ,get_store
 
@@ -47,6 +48,7 @@ func _ready():
 	StageManager.init()
 	ShardLibrarian.init()
 	History.init()
+	Saver.init()
 
 
 func start_dialogue(dialogue_name:String, fragment_name:String):

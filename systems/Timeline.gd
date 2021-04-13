@@ -20,16 +20,27 @@ func next_step():
 		Agartha.Store.finish_step()
 		call_for_step()
 
+
 func roll(amount:int):
 	unblock_all()
 	amount += Agartha.Store.current_state_id
 	if amount >= 0 and amount < Agartha.Store.state_stack.size():
 		Agartha.Store.restore_state(amount, roll_mode == RollMode.PostStep)
-		print("Restoring state:\n%s" % [Agartha.Store.current_state])
+		Agartha.StageManager.change_scene(Agartha.store.get("_scene"))
 		call_for_restoring()
 		if roll_mode == RollMode.PostStep:
-			print("Stepping after restore")
+			#print("Stepping after restore")
 			call_for_step()
+
+
+func load_save(save):
+	unblock_all()
+	Agartha.Store.restore_state_from_save(save)
+	Agartha.StageManager.change_scene(Agartha.store.get("_scene"))
+	call_for_restoring()
+	if roll_mode == RollMode.PostStep:
+		call_for_step()
+
 
 func call_for_step():
 	get_tree().get_root().propagate_call("_step")

@@ -40,6 +40,7 @@ func _init_property_list():
 	for p in get_property_list():
 			property_list[p.name] = true
 
+
 func duplicate(_deep:bool=true):
 	var output = .duplicate(true)
 	output.script = self.script

@@ -220,6 +220,18 @@ const properties_infos:Dictionary = {
 		"hint": PROPERTY_HINT_NONE,
 		"default": {}
 	},
+	"agartha/saves/quick_save_slots": {
+		"type": TYPE_INT,
+		"hint": PROPERTY_HINT_RANGE,
+		"hint_string": "1, 20, or_greater",
+		"default": 6
+	},
+	"agartha/saves/auto_save_slots": {
+		"type": TYPE_INT,
+		"hint": PROPERTY_HINT_RANGE,
+		"hint_string": "1, 20, or_greater",
+		"default": 10
+	},
 	"agartha/saves/compatibility/compatibility_code": {
 		"type": TYPE_STRING,
 		"hint": PROPERTY_HINT_NONE,
