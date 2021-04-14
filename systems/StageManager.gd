@@ -7,32 +7,47 @@ var previous_scene:Node
 var current_scene:Node
 var current_scene_path:String
 
-func change_scene(scene_id, reload_scene:bool=false):
+func change_scene(scene_id, auto_start_dialogue:bool=true, reload_scene:bool=false):
 	if current_scene_path == scene_id:
-		return false
-	if scene_id == null:
 		return false
 	var new_scene = get_scene(scene_id)
 	
-	if not new_scene:
+	if new_scene is String:
 		return false
-	if not reload_scene and new_scene.resource_path == current_scene_path:
+	if not reload_scene and new_scene and new_scene.resource_path == current_scene_path:
 		return false
 	
 	if Agartha.stage:
-		for c in Agartha.stage.get_children():
-			Agartha.stage.remove_child(c)
-		previous_scene = current_scene
-		current_scene_path = new_scene.resource_path
-		current_scene = new_scene.instance()
-		Agartha.store.set("_scene", current_scene_path)
-		Agartha.stage.add_child(current_scene)
-		Agartha.emit_signal('scene_changed', current_scene.name)
+		if new_scene:
+			_set_scene(new_scene.instance(), new_scene.resource_path)
+			if auto_start_dialogue:
+				Agartha.start_dialogue("","")
+		else:
+			_set_scene(null, "")
 		return true
 	return false
 
-func get_scene(scene_id:String):
-	if scene_id in preloaded_scenes:
+func _set_scene(scene:Node, scene_path):
+	clear_stage()
+	previous_scene = current_scene
+	current_scene_path = scene_path
+	current_scene = scene
+	Agartha.store.set("_scene", scene_path)
+	if scene:
+		Agartha.stage.add_child(scene)
+		Agartha.emit_signal('scene_changed', current_scene.name)
+	else:
+		Agartha.emit_signal('scene_changed', "")
+
+func clear_stage():
+	if Agartha.stage:
+		for c in Agartha.stage.get_children():
+			Agartha.stage.remove_child(c)
+
+func get_scene(scene_id):
+	if scene_id == null:
+		return null
+	elif scene_id in preloaded_scenes:
 		return preloaded_scenes[scene_id]
 	elif scene_id.is_abs_path():
 		if scene_id.get_extension() == "tscn":
@@ -40,10 +55,10 @@ func get_scene(scene_id:String):
 			return preloaded_scenes[scene_id]
 		else:
 			push_error("Trying to change scene using an incorrect path. [%s]" % scene_id)
-			return
+			return "error"
 	else:
 		push_error("Trying to change scene using and invalid alias. [%s]" % scene_id)
-		return
+		return "error"
 
 
 func init():

@@ -2,7 +2,7 @@ extends Node
 class_name Dialogue
 
 export var default_fragment:String = ""
-export var autorun:bool = false
+export var auto_start:bool = false
 
 var thread:Thread = null
 var semaph:Semaphore
@@ -22,15 +22,20 @@ func _ready():
 	if not self.is_in_group("dialogues"):
 		self.add_to_group("dialogues")
 	Agartha.connect("start_dialogue", self, '_start_dialogue')
-	if autorun:
-		Agartha.call_deferred('start_dialogue', name, "")
+	Agartha.connect("exit_dialogue", self, '_exit_dialogue')
 
 
 func _start_dialogue(dialogue_name, fragment_name):
 	if dialogue_name == self.name:
 		start(fragment_name)
+	elif not dialogue_name and not fragment_name and auto_start:
+		if not Agartha.Store.get_current_state().get('dialogue_name'):
+			start()
 	else:
 		exit_dialogue()
+
+func _exit_dialogue():
+	exit_dialogue()
 
 
 func start(fragment_name:String=""):
@@ -42,6 +47,7 @@ func start(fragment_name:String=""):
 	else:
 		push_error("Trying to start the dialogue '%s' without fragment name." % [self.name])
 		return
+	Agartha.Store.get_current_state().set('dialogue_name', self.name)
 	_start_thread(exec_stack)
 
 
@@ -184,12 +190,10 @@ func call_fragment(fragment_name:String):
 
 func start_dialogue(dialogue_name:String, fragment_name:String="", scene_id:String=""):
 	if is_running():
+		Agartha.exit_dialogue()
 		if scene_id:
-			var ok = Agartha.StageManager.change_scene(scene_id)
-			if ok:
-				Agartha.start_dialogue(dialogue_name, fragment_name)
-		else:
-			Agartha.start_dialogue(dialogue_name, fragment_name)
+			var _o = Agartha.StageManager.call_deferred('change_scene', scene_id, false)
+		Agartha.start_dialogue(dialogue_name, fragment_name)
 
 
 func cond(condition):#Shorhand
@@ -291,150 +295,3 @@ func menu(entries:Array, parameters:Dictionary={}):
 	step()
 func _menu_callback(return_pointer:Array):
 	return_pointer[0] = yield(Agartha, "menu_return")
-
-
-
-#
-#func _restore(state):
-#	if state.get('dialogue_name') == self.name:
-#		var restore_stack = _convert_execution_stack(state.get('dialogue_execution_stack'))
-#		_start_thread(restore_stack)
-#	else:
-#		_exit()
-#
-#
-#func _step():
-#	if execution_mode == ExecMode.Regular:
-#		if execution_stack:
-#			execution_stack[0].step_counter += 1
-#			self._store_step()
-#			semaph.post()
-#
-#
-#
-#func _store_step(origin:bool=false):
-#	var state
-#	if origin:
-#		state = Agartha.Store.get_current_state_origin()
-#	else:
-#		state = Agartha.Store.get_current_state()
-#	state.set('dialogue_execution_stack', execution_stack.duplicate(true))
-#	state.set('dialogue_name', self.name)
-#
-#
-#func _start_thread(exec_stack):
-#	if thread:
-#		_exit()
-#		if thread.is_active():
-#			thread.wait_to_finish()
-#
-#	execution_stack = exec_stack.duplicate(true)
-#	self.call_deferred('_store_step')
-#	thread = Thread.new()
-#	thread.start(self, '_thread_job', thread)
-#
-#func _thread_job(thread):
-#	execution_mode = ExecMode.Regular
-#	while execution_stack and is_running():
-#		self.call(execution_stack[0].name)
-#	self.call_deferred('_end_thread', thread)
-#
-#func _is_preactive(offset:int = 1):# The preactivation is used to only re-apply the safe functions non-data altering functions when restoring a prestep state (with potential data manipulation already applied)
-#	if execution_mode == ExecMode.Regular:
-#		return true
-#	elif execution_mode == ExecMode.Forwarding:
-#		if Agartha.Timeline.roll_mode == Agartha.Timeline.RollMode.PreStep:
-#			if execution_stack[0].step_counter >= execution_stack[0].target_step:
-#				return true
-#	return false
-#
-#func step():
-#	if Agartha.Timeline.roll_mode == Agartha.Timeline.RollMode.PreStep:
-#		_prestep_mode_step()
-#	elif Agartha.Timeline.roll_mode == Agartha.Timeline.RollMode.PostStep:
-#		_poststep_mode_step()
-#
-#func _poststep_mode_step():
-#	if execution_mode == ExecMode.Forwarding:
-#		if execution_stack[0].step_counter >= execution_stack[0].target_step:
-#			execution_mode = ExecMode.Regular
-#			execution_stack[0].erase('target_step')
-#		execution_stack[0].step_counter += 1
-#	elif is_active():
-#		semaph = Semaphore.new()
-#		semaph.wait()
-#
-#func _prestep_mode_step():
-#	if execution_mode == ExecMode.Forwarding:
-#		if execution_stack[0].step_counter >= execution_stack[0].target_step:
-#			execution_mode = ExecMode.Regular
-#			execution_stack[0].erase('target_step')
-#		execution_stack[0].step_counter += 1
-#	if is_active():
-#		semaph = Semaphore.new()
-#		semaph.wait()
-#
-#
-#
-#
-#
-#
-########
-#
-#
-#func _ready():
-#	Agartha.connect("start_dialogue", self, '_start_dialogue')
-#	if autorun:
-#		if default_fragment:
-#			Agartha.start_dialogue(name, default_fragment)
-#			#self.call_deferred("_store_step", true)
-#		else:
-#			push_error("Autorun Dialogue is missing a default fragment.")
-#
-#
-#func start(fragment_name:String=""):
-#	if fragment_name:
-#		Agartha.emit_signal('start_dialogue', name, fragment_name)
-#	elif default_fragment:
-#		Agartha.emit_signal('start_dialogue', name, default_fragment)
-#
-#
-#func _start_dialogue(dialogue_name, fragment_name):
-#	if dialogue_name and dialogue_name == self.name:
-#		if fragment_name:
-#			print("Has method %s" % self.has_method(fragment_name))
-#			if self.has_method(fragment_name):
-#				var stack_entry = {'name':fragment_name, 'target_step':0}
-#				_start_thread([stack_entry])
-#			else:
-#				push_error("Invalid fragment name '%s' in %s." % [fragment_name, dialogue_name])
-#		else:
-#			push_error("Cannot start a Dialogue without a fragment name.")
-#	else:
-#		_exit()
-#
-#func _end_thread(thread):
-#	if thread and thread.is_active():
-#		thread.wait_to_finish()
-#		self.thread = null
-#
-#
-#func _exit():
-#	execution_mode = ExecMode.Exitting
-#	if semaph:
-#		semaph.post()
-#
-#
-#func _convert_execution_stack(stored_exec_stack):
-#	var converted_exec_stack = []
-#	print("stored_exec_stack %s" % [stored_exec_stack])
-#	for entry in stored_exec_stack:
-#
-#		var converted_entry = entry.duplicate(true)
-#		if entry.has('step_counter'):
-#			converted_entry.target_step = entry.step_counter
-#			converted_entry.erase('step_counter')
-#		converted_exec_stack.append(converted_entry)
-#		print(converted_entry)
-#
-#	return converted_exec_stack

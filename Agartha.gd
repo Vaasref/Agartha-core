@@ -18,6 +18,7 @@ onready var Ask:Node = get_node("Ask")
 onready var Menu:Node = get_node("Menu")
 
 signal start_dialogue(dialogue_name, fragment_name)
+signal exit_dialogue()
 signal scene_changed(scene_name)
 
 signal show(tag, parameters)
@@ -53,6 +54,12 @@ func _ready():
 
 func start_dialogue(dialogue_name:String, fragment_name:String):
 	self.call_deferred('emit_signal', 'start_dialogue', dialogue_name, fragment_name)
+
+
+func exit_dialogue():
+	self.store.set('dialogue_execution_stack', null)
+	self.store.set('dialogue_name', null)
+	self.emit_signal('exit_dialogue')
 
 
 func step():
