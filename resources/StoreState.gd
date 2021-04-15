@@ -46,6 +46,9 @@ func duplicate(_deep:bool=true):
 	output.script = self.script
 	output.properties = self.properties.duplicate()
 	for p in properties.keys():
-		if properties[p] is Object and properties[p].has_method('duplicate'):
-			output.properties[p] =  properties[p].duplicate(true)
+		if properties[p] is Object:
+			if properties[p].has_method('duplicate'):
+				output.properties[p] =  properties[p].duplicate(true)
+		elif properties[p] is Array or properties[p] is Dictionary:
+				output.properties[p] =  properties[p].duplicate(true)
 	return output
