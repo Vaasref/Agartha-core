@@ -26,7 +26,7 @@ func roll(amount:int):
 	amount += Agartha.Store.current_state_id
 	if amount >= 0 and amount < Agartha.Store.state_stack.size():
 		Agartha.Store.restore_state(amount, roll_mode == RollMode.PostStep)
-		Agartha.StageManager.change_scene(Agartha.store.get("_scene"), false)
+		Agartha.StageManager.change_scene(Agartha.store.get("_scene"),"", "", true)
 		call_for_restoring()
 		if roll_mode == RollMode.PostStep:
 			#print("Stepping after restore")
@@ -36,7 +36,7 @@ func roll(amount:int):
 func load_save(save):
 	unblock_all()
 	Agartha.Store.restore_state_from_save(save)
-	Agartha.StageManager.change_scene(Agartha.store.get("_scene"), false)
+	Agartha.StageManager.change_scene(Agartha.store.get("_scene"),"", "", true)
 	call_for_restoring()
 	if roll_mode == RollMode.PostStep:
 		call_for_step()

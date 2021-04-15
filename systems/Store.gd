@@ -1,27 +1,19 @@
 extends Node
 
-var save_folder_path:String
-var save_extension:String
+var stack_size_max:int
 
-var stack_size_max:int = 5
-
-var state_stack:Array = []
-var current_state_id:int = 0
-var current_state:Array = []
+var state_stack:Array
+var current_state_id:int
+var current_state:Array
 
 func init(default_state=null):
 	stack_size_max = Agartha.Settings.get("agartha/timeline/maximum_rollback_steps")
-	var compress_saves = Agartha.Settings.get("agartha/saves/compress_savefiles")
-	if compress_saves:
-		save_extension = ".res"
-	else:
-		save_extension = ".tres"
-	save_folder_path = Agartha.Settings.get_user_path("agartha/paths/saves/saves_folder")
 	if default_state:
 		current_state = [default_state.duplicate(), null]
 	else:
 		current_state = [StoreState.new(), null]
-	state_stack.push_front(current_state)
+	current_state_id = 0
+	state_stack = [current_state]
 	finish_step()# Using this function here for its semantic
 
 

@@ -1,17 +1,23 @@
 extends Node
 
 #Persistent
-var seen_lines:Dictionary = {}
+var seen_lines:Dictionary
 
 #Store
-var dialogue_log:Array = []
-var seen_shards:Dictionary = {}
-var seen_fragments:Dictionary = {}
+var dialogue_log:Array
+var seen_shards:Dictionary
+var seen_fragments:Dictionary
 
-var log_max_length = -1
+var log_max_length
 
 
 func init():
+	seen_lines = {}
+	dialogue_log = []
+	seen_shards = {}
+	seen_fragments = {}
+	log_max_length = -1
+	
 	if Agartha.Persistent.has_value("_history_seen_lines"):
 		seen_lines = Agartha.Persistent.get_value("_history_seen_lines")
 		

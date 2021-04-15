@@ -1,29 +1,26 @@
 extends Node
 
 
-var preloaded_scenes:Dictionary = {}
+var preloaded_scenes:Dictionary
 
 var previous_scene:Node
 var current_scene:Node
 var current_scene_path:String
 
-func change_scene(scene_id, auto_start_dialogue:bool=true, reload_scene:bool=false):
-	if current_scene_path == scene_id:
-		return false
+func change_scene(scene_id:String, dialogue_name:String="", fragment_name:String="", restoring:bool=false):
 	var new_scene = get_scene(scene_id)
 	
-	if new_scene is String:
-		return false
-	if not reload_scene and new_scene and new_scene.resource_path == current_scene_path:
-		return false
-	
-	if Agartha.stage:
-		if new_scene:
-			_set_scene(new_scene.instance(), new_scene.resource_path)
-			if auto_start_dialogue:
-				Agartha.start_dialogue("","")
+	if Agartha.stage and Agartha.stage.is_inside_tree():
+		if restoring:
+			Agartha.emit_signal("exit_dialogue")
 		else:
+			Agartha.exit_dialogue()
+		if not new_scene:
 			_set_scene(null, "")
+		elif new_scene.resource_path != current_scene_path:
+			_set_scene(new_scene.instance(), new_scene.resource_path)
+			if not restoring:
+				Agartha.start_dialogue(dialogue_name, fragment_name)
 		return true
 	return false
 
@@ -45,23 +42,29 @@ func clear_stage():
 			Agartha.stage.remove_child(c)
 
 func get_scene(scene_id):
-	if scene_id == null:
+	if not scene_id:
 		return null
 	elif scene_id in preloaded_scenes:
 		return preloaded_scenes[scene_id]
 	elif scene_id.is_abs_path():
-		if scene_id.get_extension() == "tscn":
+		if ResourceLoader.exists(scene_id, "PackedScene"):
 			load_scene(scene_id, scene_id, true)
 			return preloaded_scenes[scene_id]
 		else:
 			push_error("Trying to change scene using an incorrect path. [%s]" % scene_id)
-			return "error"
+			return null
 	else:
 		push_error("Trying to change scene using and invalid alias. [%s]" % scene_id)
-		return "error"
+		return null
 
 
 func init():
+	preloaded_scenes = {}
+
+	previous_scene = null
+	current_scene = null
+	current_scene_path = ""
+	
 	var aliases = Agartha.Settings.get("agartha/paths/scenes/scene_aliases")
 	var scenes:Dictionary = {}
 	

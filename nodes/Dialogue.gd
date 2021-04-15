@@ -25,12 +25,17 @@ func _ready():
 	Agartha.connect("exit_dialogue", self, '_exit_dialogue')
 
 
+func _exit_tree():
+	Agartha.disconnect("start_dialogue", self, '_start_dialogue')
+	Agartha.disconnect("exit_dialogue", self, '_exit_dialogue')
+
+
 func _start_dialogue(dialogue_name, fragment_name):
 	if dialogue_name == self.name:
 		start(fragment_name)
 	elif not dialogue_name and not fragment_name and auto_start:
-		if not Agartha.Store.get_current_state().get('dialogue_name'):
-			start()
+		if not Agartha.store.has('_dialogue_name'):
+			start(fragment_name)
 	else:
 		exit_dialogue()
 
@@ -47,18 +52,18 @@ func start(fragment_name:String=""):
 	else:
 		push_error("Trying to start the dialogue '%s' without fragment name." % [self.name])
 		return
-	Agartha.Store.get_current_state().set('dialogue_name', self.name)
+	Agartha.Store.get_current_state().set('_dialogue_name', self.name)
 	_start_thread(exec_stack)
 
 
 func _store(state):
 	if is_active():
-		state.set('dialogue_execution_stack', execution_stack.duplicate(true))
-		state.set('dialogue_name', self.name)
+		state.set('_dialogue_execution_stack', execution_stack.duplicate(true))
+		state.set('_dialogue_name', self.name)
 
 func _restore(state):
-	if state.get('dialogue_name') == self.name:
-		var exec_stack = state.get('dialogue_execution_stack')
+	if state.get('_dialogue_name') == self.name:
+		var exec_stack = state.get('_dialogue_execution_stack')
 		if exec_stack: # just to be sure it is there
 			_start_thread(exec_stack)
 			semaph = Semaphore.new()
@@ -121,9 +126,9 @@ func _end_thread(thread:Thread):
 
 func _clear_from_store():
 	var state = Agartha.Store.get_current_state()
-	if state.get('dialogue_name') == self.name:
-		state.set('dialogue_execution_stack', null)
-		state.set('dialogue_name', null)
+	if state.get('_dialogue_name') == self.name:
+		state.set('_dialogue_execution_stack', null)
+		state.set('_dialogue_name', null)
 
 func _recall_fragment():
 	if self.has_method(execution_stack[0]['fragment_name']):
@@ -188,12 +193,12 @@ func call_fragment(fragment_name:String):
 		step()
 
 
-func start_dialogue(dialogue_name:String, fragment_name:String="", scene_id:String=""):
+func jump(dialogue_name:String, fragment_name:String="", scene_id:String=""):
 	if is_running():
-		Agartha.exit_dialogue()
 		if scene_id:
-			var _o = Agartha.StageManager.call_deferred('change_scene', scene_id, false)
-		Agartha.start_dialogue(dialogue_name, fragment_name)
+			var _o = Agartha.call_deferred('change_scene', scene_id, dialogue_name, fragment_name)
+		else:
+			var _o = Agartha.call_deferred('start_dialogue', dialogue_name, fragment_name)
 
 
 func cond(condition):#Shorhand

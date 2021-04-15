@@ -52,18 +52,29 @@ func _ready():
 	Saver.init()
 
 
-func start_dialogue(dialogue_name:String, fragment_name:String):
-	self.call_deferred('emit_signal', 'start_dialogue', dialogue_name, fragment_name)
+func change_scene(scene_id:String, dialogue_name:String="", fragment_name:String=""):
+	Agartha.StageManager.change_scene(scene_id, dialogue_name, fragment_name)
+	
+
+func start_dialogue(dialogue_name:String, fragment_name:String=""):
+	self.store.set('_dialogue_execution_stack', null)
+	self.store.set('_dialogue_name', null)
+	self.emit_signal('start_dialogue', dialogue_name, fragment_name)
 
 
 func exit_dialogue():
-	self.store.set('dialogue_execution_stack', null)
-	self.store.set('dialogue_name', null)
+	self.store.set('_dialogue_execution_stack', null)
+	self.store.set('_dialogue_name', null)
 	self.emit_signal('exit_dialogue')
 
 
 func step():
 	Timeline.next_step()
+
+
+func reset():
+	change_scene("")
+	_ready()
 
 
 func get_store():

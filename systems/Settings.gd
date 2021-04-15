@@ -2,7 +2,7 @@ tool
 extends Node
 
 
-var settings_list:Dictionary = {}
+var settings_list:Dictionary
 
 func _ready():
 	if Engine.editor_hint:
@@ -12,6 +12,8 @@ func init():
 	if not Engine.editor_hint:
 		if Agartha.Persistent.has_value("_settings"):
 			settings_list = Agartha.Persistent.get_value("_settings").duplicate(true)
+		else:
+			settings_list = {}
 
 
 ##Specialized getters

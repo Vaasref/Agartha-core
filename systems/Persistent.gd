@@ -1,8 +1,8 @@
 extends Node
 
-var persistent_state = StoreState.new()
+var persistent_state:StoreState
 
-var path = "res://saves/persistent.tres"
+var path:String
 
 
 func init():
@@ -11,6 +11,7 @@ func init():
 	var dir = Directory.new()
 	if not dir.dir_exists(path.get_base_dir()):
 		dir.make_dir_recursive(path.get_base_dir())
+	persistent_state = StoreState.new()
 	load_persistent()
 
 
@@ -22,7 +23,7 @@ func save_persistent():
 
 func load_persistent():
 	if ResourceLoader.exists(path):
-		persistent_state = load(path)
+		persistent_state = ResourceLoader.load(path) as StoreState
 
 
 func set_value(name, value):
@@ -37,6 +38,7 @@ func get_value(name, default=null):
 	if output == null and default != null:
 		output = default
 	return output
+
 
 func has_value(name):
 	return persistent_state.has(name)
