@@ -3,6 +3,13 @@ extends Node
 
 
 func get(tag:String, strict:bool=false):
+	var output = get_array(tag, strict)
+	if output.size() == 1:
+		output = output[0]
+	return output
+
+
+func get_array(tag:String, strict:bool=false):
 	var output = []
 	tag = "# " + tag.trim_prefix("# ").to_lower()
 	if strict:
@@ -14,9 +21,8 @@ func get(tag:String, strict:bool=false):
 				if t.begins_with(tag):
 					output.append(n)
 					break
-	if output.size() == 1:
-		output = output[0]
 	return output
+
 
 func get_tags(tag:String):
 	var output = []
@@ -28,6 +34,7 @@ func get_tags(tag:String):
 			if t.begins_with(tag):
 				output += t
 	return output
+
 
 func get_node_dict(tag:String):
 	var output = {}

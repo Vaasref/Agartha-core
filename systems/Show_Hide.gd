@@ -53,7 +53,7 @@ func show(tag:String, parameters:Dictionary):
 		new_shown[t] = true
 	shown[radical] = new_shown
 	
-	var family = Agartha.Tag.get(radical)
+	var family = Agartha.Tag.get_array(radical)
 	for n in family:
 		if n :
 			if n in nodes_to_show:
