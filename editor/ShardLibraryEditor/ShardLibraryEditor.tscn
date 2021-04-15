@@ -154,6 +154,10 @@ custom_fonts/font = SubResource( 1 )
 custom_colors/font_color = Color( 0.86, 0.08, 0.24, 1 )
 script = ExtResource( 5 )
 
+[node name="Timer" type="Timer" parent="VBoxContainer/HSplitContainer/VBoxContainer/GridContainer/ErrorDisplay"]
+wait_time = 0.5
+one_shot = true
+
 [node name="LibraryNameLabel" type="Label" parent="VBoxContainer/HSplitContainer/VBoxContainer/GridContainer"]
 margin_left = 1000.0
 margin_top = 1.0
@@ -341,11 +345,11 @@ script = ExtResource( 8 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
-[connection signal="open_library" from="." to="FileDialog" method="_on_open_library"]
+[connection signal="open_library" from="." to="VBoxContainer/HSplitContainer/VBoxContainer/GridContainer/LibraryNameLabel" method="_on_open_library"]
 [connection signal="open_library" from="." to="VBoxContainer/HSplitContainer/VBoxContainer/PanelContainer/MarginContainer/HBoxContainer/HBoxContainer2/Save" method="_on_open_library"]
 [connection signal="open_library" from="." to="VBoxContainer/HSplitContainer/ShardTree" method="_on_open_library"]
 [connection signal="open_library" from="." to="VBoxContainer/HSplitContainer/VBoxContainer/ShardEditor" method="open_shard_library"]
-[connection signal="open_library" from="." to="VBoxContainer/HSplitContainer/VBoxContainer/GridContainer/LibraryNameLabel" method="_on_open_library"]
+[connection signal="open_library" from="." to="FileDialog" method="_on_open_library"]
 [connection signal="button_pressed" from="VBoxContainer/HSplitContainer/ShardTree" to="VBoxContainer/HSplitContainer/ShardTree" method="_on_item_button_pressed"]
 [connection signal="item_rmb_selected" from="VBoxContainer/HSplitContainer/ShardTree" to="VBoxContainer/HSplitContainer/ShardTree" method="_on_item_rmb_selected"]
 [connection signal="item_selected" from="VBoxContainer/HSplitContainer/ShardTree" to="VBoxContainer/HSplitContainer/ShardTree" method="_on_item_selected"]
@@ -357,6 +361,7 @@ __meta__ = {
 [connection signal="update_cursor" from="VBoxContainer/HSplitContainer/VBoxContainer/ShardEditor" to="VBoxContainer/HSplitContainer/VBoxContainer/GridContainer/CursorPositionLabel" method="_on_ShardEditor_update_cursor"]
 [connection signal="update_shard_library" from="VBoxContainer/HSplitContainer/VBoxContainer/ShardEditor" to="VBoxContainer/HSplitContainer/ShardTree" method="_on_update_shard_library"]
 [connection signal="update_shortcuts" from="VBoxContainer/HSplitContainer/VBoxContainer/ShardEditor" to="VBoxContainer/HSplitContainer/VBoxContainer/ScrollContainer/ShorcutTabs" method="_on_update_shortcuts"]
+[connection signal="timeout" from="VBoxContainer/HSplitContainer/VBoxContainer/GridContainer/ErrorDisplay/Timer" to="VBoxContainer/HSplitContainer/VBoxContainer/GridContainer/ErrorDisplay" method="_on_timeout"]
 [connection signal="use_shortcut" from="VBoxContainer/HSplitContainer/VBoxContainer/ScrollContainer/ShorcutTabs" to="." method="_on_use_shortcut"]
 [connection signal="pressed" from="VBoxContainer/HSplitContainer/VBoxContainer/PanelContainer/MarginContainer/HBoxContainer/HBoxContainer2/Save" to="VBoxContainer/HSplitContainer/VBoxContainer/ShardEditor" method="_on_save_button_pressed"]
 [connection signal="pressed" from="VBoxContainer/HSplitContainer/VBoxContainer/PanelContainer/MarginContainer/HBoxContainer/HBoxContainer2/Insert" to="FileDialog" method="_on_Insert_pressed"]

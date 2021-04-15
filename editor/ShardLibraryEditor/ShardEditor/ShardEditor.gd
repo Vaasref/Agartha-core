@@ -46,6 +46,7 @@ func update_text(script):
 	self.emit_signal("script_error", "")#Reset the error display
 	update_colors()
 	var shard_started = false
+	var shard_id_list = []
 	var shortcuts = {}
 	var line = 1
 	for l in script:
@@ -53,7 +54,6 @@ func update_text(script):
 			if not shard_started and l[0] != ShardParser.LineType.SHARD_ID:
 				error = "Shard Script Error: shards must start with a Shard_ID. Line %d" % line
 				self.emit_signal("script_error", error)
-				push_error(error)
 			match l[0]:
 				ShardParser.LineType.ERROR:
 					self.add_color_region(self.get_line(line-1), "", Color.crimson, true)
@@ -62,7 +62,6 @@ func update_text(script):
 					else:
 						error = "Shard Script Error: invalid '%s' syntax line %d." % [ShardParser.LineType_names[l[1]] ,line]
 					self.emit_signal("script_error", error)
-					push_error(error)
 				ShardParser.LineType.SAY:
 					if l[1]:
 						self.add_keyword_color(l[1], Color.palevioletred)
@@ -80,6 +79,11 @@ func update_text(script):
 							self.add_keyword_color(w, Color.paleturquoise)
 				ShardParser.LineType.SHARD_ID:
 					shard_started = true
+					if l[1] in shard_id_list:
+						error = "Shard Script Error: shard_id '%s' used twice." % [l[1]]
+						self.emit_signal("script_error", error)
+					else:
+						shard_id_list.append(l[1])
 				ShardParser.LineType.SHORTCUT:
 					shortcuts[l[1]] = true
 		line += 1
