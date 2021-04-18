@@ -76,6 +76,18 @@ func rename(save, new_name):
 			Agartha.emit_signal("saved")
 
 
+func delete(save):
+	if save is String:
+		save = ResourceLoader.load(get_save_path(save), "Resource", true) as StoreSave
+		if check_save_compatibility(save, false) == COMPATIBILITY_ERROR.NOT_SAVE:
+			save = null
+	print(save)
+	if save is Resource:
+		var dir = Directory.new()
+		dir.remove(save.resource_path)
+		Agartha.emit_signal("saved")
+
+
 func quick_save():
 	var max_slot = Agartha.Settings.get("agartha/saves/quick_save_slots")
 	var file = File.new()
