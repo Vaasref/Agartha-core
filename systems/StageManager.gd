@@ -75,7 +75,7 @@ func init():
 			if aliases[k] is PackedScene:
 				scenes[k] = aliases[k]
 			elif aliases[k] is String:
-				if aliases[k].is_abs_path() and aliases[k].get_extension() == "tscn":
+				if aliases[k].is_abs_path() and ResourceLoader.exists(aliases[k], "PackedScene"):
 					scenes[k] = aliases[k]
 	lazy_preload_scenes(scenes)
 
@@ -101,6 +101,7 @@ func load_scene(alias:String, path:String, signal_loading:bool=false):
 				Agartha.emit_signal("loading", NAN)
 			var scene = ResourceLoader.load(path, "PackedScene")
 			if scene:
+				
 				preloaded_scenes[alias] = scene
 				preloaded_scenes[preloaded_scenes[alias].resource_path] = preloaded_scenes[alias]
 				if signal_loading:
