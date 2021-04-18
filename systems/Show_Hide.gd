@@ -53,7 +53,9 @@ func _get_truncated_path(node:Node):
 
 
 func _restore(state):
-	var sh_states:Dictionary = state.get("_tagged_sh_states")
+	var sh_states = state.get("_tagged_sh_states")
+	if not sh_states:
+		sh_states = {}
 	for path in sh_states.keys():
 		var n = Agartha.stage.get_node(path)
 		if n:
