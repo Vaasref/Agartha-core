@@ -4,6 +4,7 @@ onready var Timeline:Node = get_node("Timeline")
 onready var Store:Node = get_node("Store")
 onready var Persistent:Node = get_node("Persistent")
 onready var Settings:Node = get_node("Settings")
+onready var Director:Node = get_node("Director")
 onready var StageManager:Node = get_node("StageManager")
 onready var Tag:Node = get_node("Tag")
 onready var ShardParser:Node = get_node("ShardParser")
@@ -46,6 +47,7 @@ func _ready():
 	Store.init()
 	Persistent.init()
 	Settings.init()
+	Director.init()
 	StageManager.init()
 	ShardLibrarian.init()
 	History.init()
@@ -59,12 +61,14 @@ func change_scene(scene_id:String, dialogue_name:String="", fragment_name:String
 func start_dialogue(dialogue_name:String, fragment_name:String=""):
 	self.store.set('_dialogue_execution_stack', null)
 	self.store.set('_dialogue_name', null)
+	Director.start_dialogue(dialogue_name, fragment_name)
 	self.emit_signal('start_dialogue', dialogue_name, fragment_name)
 
 
 func exit_dialogue():
 	self.store.set('_dialogue_execution_stack', null)
 	self.store.set('_dialogue_name', null)
+	Director.exit_dialogue()
 	self.emit_signal('exit_dialogue')
 
 

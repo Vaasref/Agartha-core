@@ -4,299 +4,73 @@ class_name Dialogue
 export var default_fragment:String = ""
 export var auto_start:bool = false
 
-var thread:Thread = null
-var semaph:Semaphore
+var thread:Thread
+var stage_path:String
 
-var execution_stack:Array = []
+func _preprocess():
+	Agartha.Director.preprocess_dialogue(self)
 
-enum ExecMode {
-	Starting,
-	Regular,
-	Forwarding,
-	Exitting
-}
-var execution_mode:int = ExecMode.Regular
-
-
-func _ready():
-	if not self.is_in_group("dialogues"):
-		self.add_to_group("dialogues")
-	Agartha.connect("start_dialogue", self, '_start_dialogue')
-	Agartha.connect("exit_dialogue", self, '_exit_dialogue')
-
-
-func _exit_tree():
-	Agartha.disconnect("start_dialogue", self, '_start_dialogue')
-	Agartha.disconnect("exit_dialogue", self, '_exit_dialogue')
-
-
-func _start_dialogue(dialogue_name, fragment_name):
-	if dialogue_name == self.name:
-		start(fragment_name)
-	elif not dialogue_name and not fragment_name and auto_start:
-		if not Agartha.store.has('_dialogue_name'):
-			start(fragment_name)
-	else:
-		exit_dialogue()
-
-func _exit_dialogue():
-	exit_dialogue()
-
-
-func start(fragment_name:String=""):
-	var exec_stack
-	if fragment_name:
-		exec_stack = [{'fragment_name': fragment_name}]
-	elif default_fragment:
-		exec_stack = [{'fragment_name': default_fragment}]
-	else:
-		push_error("Trying to start the dialogue '%s' without fragment name." % [self.name])
-		return
-	Agartha.Store.get_current_state().set('_dialogue_name', self.name)
-	_start_thread(exec_stack)
-
-
-func _store(state):
-	if is_active():
-		state.set('_dialogue_execution_stack', execution_stack.duplicate(true))
-		state.set('_dialogue_name', self.name)
-
-func _restore(state):
-	if state.get('_dialogue_name') == self.name:
-		var exec_stack = state.get('_dialogue_execution_stack')
-		if exec_stack: # just to be sure it is there
-			_start_thread(exec_stack)
-			semaph = Semaphore.new()
-	else:
-		exit_dialogue()
-
-########
-
-func _step():
-	if semaph:
-		semaph.post()
+######## To check the implementations of the methods look at ProcessedDialogue.gd
 
 func step():
-	if is_running():
-		if execution_mode == ExecMode.Forwarding:
-			if execution_stack[0].step_counter >= execution_stack[0].target_step:
-				execution_mode = ExecMode.Regular
-				var _o = execution_stack[0].erase('target_step')
-		if execution_mode == ExecMode.Regular:
-			_store(Agartha.Store.get_current_state())
-			_wait_semaphore()
-			execution_stack[0]['step_counter'] += 1
-		else:
-			execution_stack[0]['step_counter'] += 1
+	pass
 
-func _wait_semaphore():#This function allow to pre-post the semaphore
-	if not semaph:
-		semaph = Semaphore.new()
-	semaph.wait()
-	semaph = null
+func _wait_semaphore():
+	pass
 
-func _start_thread(exec_stack):
-	if thread:
-		exit_dialogue()
-		if thread.is_active():
-			thread.wait_to_finish()
-
-	execution_stack = exec_stack.duplicate(true)
-	thread = Thread.new()
-	thread.start(self, '_execution_loop', thread)
-
-
-func _execution_loop(thread):
-	execution_mode = ExecMode.Starting
-	while execution_stack and not is_exitting():
-		if execution_stack[0].has('step_counter'):
-			_recall_fragment()
-		else:
-			var fragment_name = execution_stack.pop_front()['fragment_name']
-			execution_mode = ExecMode.Regular
-			call_fragment(fragment_name)
-	self.call_deferred('_end_thread', thread)
-
-
-func _end_thread(thread:Thread):
-	if thread and thread.is_active():
-		thread.wait_to_finish()
-		self.thread = null
-		_clear_from_store()
-
-func _clear_from_store():
-	var state = Agartha.Store.get_current_state()
-	if state.get('_dialogue_name') == self.name:
-		state.set('_dialogue_execution_stack', null)
-		state.set('_dialogue_name', null)
-
-func _recall_fragment():
-	if self.has_method(execution_stack[0]['fragment_name']):
-		execution_mode = ExecMode.Forwarding
-		execution_stack[0]['target_step'] = execution_stack[0]['step_counter']
-		execution_stack[0]['step_counter'] = 0
-		self.call(execution_stack[0]['fragment_name'])
-		execution_stack.pop_front()
-	else:
-		push_error("Invalid fragement name '%s' in dialogue '%s'" % [execution_stack[0]['fragment_name'], self.name])
-
-
-func _is_preactive():
-	if execution_mode == ExecMode.Regular:
-		return true
-	elif execution_mode == ExecMode.Forwarding:
-		if Agartha.Timeline.roll_mode == Agartha.Timeline.RollMode.PreStep:
-			if execution_stack[0].step_counter >= execution_stack[0].target_step:
-				return true
+func _is_preactive() -> bool:
 	return false
-
 
 
 
 ###########
 
-func ia():#Shorhand
-	return is_active()
-func is_active():
-	return execution_mode == ExecMode.Regular
+func ia() -> bool:#Shorhand
+	return false
+func is_active() -> bool:
+	return false
 
-func is_running():
-	return execution_mode == ExecMode.Regular or execution_mode == ExecMode.Forwarding
+func is_running() -> bool:
+	return false
 
-func is_exitting():
-	return execution_mode == ExecMode.Exitting
+func is_exitting() -> bool:
+	return false
 
 
 ### User-side execution actions
 
-func exit_dialogue():
-	execution_mode = ExecMode.Exitting
-	if semaph:
-		semaph.post()
-
-
 func call_fragment(fragment_name:String):
-	if is_active():
-		if self.has_method(fragment_name):
-			Agartha.History.log_fragment(self.name, fragment_name)
-			var entry = {'fragment_name':fragment_name, 'step_counter':0}
-			if execution_stack:
-				execution_stack[0].step_counter += 1
-			execution_stack.push_front(entry)
-			self.call(fragment_name)
-			execution_stack.pop_front()
-			if execution_stack:
-				execution_stack[0].step_counter -= 1
-		else:
-			push_error("Invalid fragement name '%s' in dialogue '%s'" % [fragment_name, self.name])
-	else:
-		step()
-
+	pass
 
 func jump(dialogue_name:String, fragment_name:String="", scene_id:String=""):
-	if is_running():
-		if scene_id:
-			var _o = Agartha.call_deferred('change_scene', scene_id, dialogue_name, fragment_name)
-		else:
-			var _o = Agartha.call_deferred('start_dialogue', dialogue_name, fragment_name)
+	pass
 
 
-func cond(condition):#Shorhand
-	return condition(condition)
-func condition(condition):
-	match execution_mode:
-		ExecMode.Regular:
-			if not execution_stack[0].has('condition_stack'):
-				execution_stack[0].condition_stack = []
-			if condition:
-				condition = true
-			else:
-				condition = false
-			execution_stack[0].condition_stack.push_front(condition)
-		ExecMode.Forwarding:
-			if execution_stack[0].has('condition_stack'):
-				condition = execution_stack[0].condition_stack.pop_back()
-			else:
-				push_error("Condition stack misalignment.")
-	return condition
+func cond(condition) -> bool:#Shorhand
+	return false
+func condition(condition) -> bool:
+	return false
 
 func shard(shard_id:String, exact_id:bool=true, shard_library:Resource=null):
-	if is_running():
-		var shard = []
-		if shard_library:
-			if exact_id:
-				if shard_id in shard_library.shards:
-					shard = shard_library.shards[shard_id]
-			else:
-				shard = shard_library.get_shards(shard_id)
-		else:
-			shard = Agartha.ShardLibrarian.get_shard(shard_id, exact_id)
-		if shard:
-			if exact_id:
-				Agartha.History.log_shard(shard_id)
-			else:
-				Agartha.History.log_shard(Agartha.ShardLibrarian.get_sub_shard_ids(shard_id))
-		for l in shard:
-			if is_running():
-				if l:
-					match l[0]:
-						Agartha.ShardParser.LineType.SAY:
-							say(l[1], l[2])
-							step()
-						Agartha.ShardParser.LineType.SHOW:
-							show(l[1])
-						Agartha.ShardParser.LineType.HIDE:
-							hide(l[1])
-						Agartha.ShardParser.LineType.PLAY:
-							print("play %s" % l[1])
-						Agartha.ShardParser.LineType.HALT:
-							halt(l[1])
-			else:
-				break
+	pass
 
 
 ################# Dialogue actions
 
-
 func show(tag:String, parameters:Dictionary={}):
-	if _is_preactive():
-		Agartha.Show_Hide.call_deferred("action_show", tag, parameters)
-
+	pass
 
 func hide(tag:String, parameters:Dictionary={}):
-	if _is_preactive():
-		Agartha.Show_Hide.call_deferred("action_hide", tag, parameters)
-
+	pass
 
 func halt(priority:int):
-	if _is_preactive():
-		Agartha.Timeline.call_deferred("skip_stop", priority)
-
+	pass
 
 func say(character, text:String, parameters:Dictionary={}):
-	if _is_preactive():
-		Agartha.Say.call_deferred("action",character, text, parameters)
-
+	pass
 
 func ask(default_answer:String="", parameters:Dictionary={}):
-	if _is_preactive():
-		var return_pointer = [null] # Using a array here with a null entry as a makeshift pointer
-		_ask_callback(return_pointer)
-		Agartha.Ask.call_deferred("action", default_answer, parameters)
-		step()
-		return return_pointer[0]
-	step()
-func _ask_callback(return_pointer:Array):
-	return_pointer[0] = yield(Agartha, "ask_return")
-
+	pass
 
 func menu(entries:Array, parameters:Dictionary={}):
-	if _is_preactive():
-		var return_pointer = [null] # Using a array here with a null entry as a makeshift pointer
-		_menu_callback(return_pointer)
-		Agartha.Menu.call_deferred("action", entries, parameters)
-		step()
-		return return_pointer[0]
-	step()
-func _menu_callback(return_pointer:Array):
-	return_pointer[0] = yield(Agartha, "menu_return")
+	pass

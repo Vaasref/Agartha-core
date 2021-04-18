@@ -31,6 +31,7 @@ func _set_scene(scene:Node, scene_path):
 	current_scene = scene
 	Agartha.store.set("_scene", scene_path)
 	if scene:
+		Agartha.Director.preprocess_dialogues(scene)
 		Agartha.stage.add_child(scene)
 		Agartha.emit_signal('scene_changed', current_scene.name)
 	else:
