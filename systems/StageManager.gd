@@ -41,6 +41,7 @@ func clear_stage():
 	if Agartha.stage:
 		for c in Agartha.stage.get_children():
 			Agartha.stage.remove_child(c)
+			c.queue_free()
 
 func get_scene(scene_id):
 	if not scene_id:
