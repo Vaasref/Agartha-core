@@ -34,14 +34,11 @@ func finish_step():
 	current_state[1] = current_state[0].duplicate()#Old origin replaced by previous working state
 
 
-func restore_state(id:int, post_step:bool=false):
+func restore_state(id:int):
 	if id < 0 and id >= state_stack.size():
 		push_warning("Invalid store state ID : %s" % id)
 		return
-	if post_step:
-		current_state = [state_stack[id][1].duplicate(), state_stack[id][1].duplicate()]#Restore from the origin
-	else:
-		current_state = [state_stack[id][0].duplicate(), state_stack[id][1].duplicate()]#Restore as stored
+	current_state = [state_stack[id][0].duplicate(), state_stack[id][1].duplicate()]#Restore as stored
 	current_state_id = id
 
 

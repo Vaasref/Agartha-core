@@ -40,9 +40,8 @@ func _is_preactive(thread:Thread):
 	if thread.get_meta("execution_mode") == Director.ExecMode.Normal:
 		return true
 	elif thread.get_meta("execution_mode") == Director.ExecMode.Forwarding:
-		if Agartha.Timeline.roll_mode == Agartha.Timeline.RollMode.PreStep:
-			if thread.get_meta("execution_stack")[0].step_counter >= thread.get_meta("execution_stack")[0].target_step:
-				return true
+		if thread.get_meta("execution_stack")[0].step_counter >= thread.get_meta("execution_stack")[0].target_step:
+			return true
 	return false
 
 

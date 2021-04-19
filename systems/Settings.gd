@@ -168,12 +168,6 @@ const properties_infos:Dictionary = {
 		"default": "0.0.0",
 		"hard_default": "0.0.0"
 	},
-	"agartha/timeline/roll_mode": {
-		"type": TYPE_INT,
-		"hint": PROPERTY_HINT_ENUM,
-		"hint_string": "Pre-step,Post-step",
-		"default": 0
-	},
 	"agartha/timeline/maximum_rollback_steps": {
 		"type": TYPE_INT,
 		"hint": PROPERTY_HINT_RANGE,

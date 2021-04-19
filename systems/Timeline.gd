@@ -1,16 +1,5 @@
 extends Node
 
-enum RollMode {
-	PreStep,
-	PostStep
-}
-export(int, "pre_step", "post_step") var roll_mode = RollMode.PreStep
-
-
-func init():
-	roll_mode = Agartha.Settings.get("agartha/timeline/roll_mode")
-
-
 func next_step():
 	if any_blocker():
 		call_for_blocked_step()
@@ -25,21 +14,22 @@ func roll(amount:int):
 	unblock_all()
 	amount += Agartha.Store.current_state_id
 	if amount >= 0 and amount < Agartha.Store.state_stack.size():
-		Agartha.Store.restore_state(amount, roll_mode == RollMode.PostStep)
-		Agartha.StageManager.change_scene(Agartha.store.get("_scene"),"", "", true)
+		Agartha.Store.restore_state(amount)
+		var scene = Agartha.store.get("_scene")
+		if not scene:
+			scene = ""
+		Agartha.StageManager.change_scene(scene, "", "", true)
 		call_for_restoring()
-		if roll_mode == RollMode.PostStep:
-			#print("Stepping after restore")
-			call_for_step()
 
 
 func load_save(save):
 	unblock_all()
 	Agartha.Store.restore_state_from_save(save)
-	Agartha.StageManager.change_scene(Agartha.store.get("_scene"),"", "", true)
+	var scene = Agartha.store.get("_scene")
+	if not scene:
+		scene = ""
+	Agartha.StageManager.change_scene(scene, "", "", true)
 	call_for_restoring()
-	if roll_mode == RollMode.PostStep:
-		call_for_step()
 
 
 func call_for_step():
