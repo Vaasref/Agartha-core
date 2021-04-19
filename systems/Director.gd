@@ -125,6 +125,7 @@ func _store(state):
 	pass
 
 func _restore(state):
+	exit_dialogue()
 	if state.has('_dialogue_name') and state.has('_dialogue_execution_stack'):
 		restore_dialogue(state.get('_dialogue_name'), state.get('_dialogue_execution_stack'))
 
@@ -174,7 +175,6 @@ func restore_dialogue(dialogue_name:String, execution_stack:Array):
 		return
 	var dialogue = dialogue_list[dialogue_name]
 
-	exit_dialogue()
 	var thread = Thread.new()
 	current_dialogue_thread = thread ## Maybe a mutex here
 	thread.start(self, '_execution_loop', [thread, dialogue, dialogue_name, execution_stack.duplicate(true)])
