@@ -24,7 +24,7 @@ func step(thread:Thread):
 				thread.set_meta("execution_mode", Director.ExecMode.Normal)
 				var _o = thread.get_meta("execution_stack")[0].erase('target_step')
 		if thread.get_meta("execution_mode") == Director.ExecMode.Normal:
-			#_store(Agartha.Store.get_current_state())
+			Agartha.Director._store(Agartha.store)
 			_wait_semaphore(thread)
 		thread.get_meta("execution_stack")[0]['step_counter'] += 1
 
