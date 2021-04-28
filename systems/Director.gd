@@ -44,78 +44,6 @@ func get_dialogue_path(dialogue_name:String, push_errors:bool=true, push_warning
 	
 	return dialogue_path
 
-
-func preprocess_dialogues(scene:Node):
-	scene.propagate_call('_preprocess')
-
-func preprocess_dialogue(dialogue):
-	print("Preprocessing '%s'" % dialogue.name)
-	var script:String = dialogue.get_script().source_code
-	var output
-	#print(script)
-	var re = RegEx.new()
-	var error:String = ""
-	re.compile("extends Dialogue")## Make that more sturdy
-	script = re.sub(script, "extends ProcessedDialogue")
-	#print(script)
-	re.compile("\\#\\@fragment[\\n\\r]+func ([a-z_A-Z]+)\\(()\\)")
-	var res = re.search_all(script)
-	output = script
-	for r in res:
-		var offset = output.length() - script.length()
-		output = output.insert(offset + r.get_start(2), "thread:Thread")
-	script = output
-
-	for m in preprocessed_methods:
-		re.compile("(?<![^ \\t])(self\\.)?%s\\((\\))?" % m)
-		output = script
-		for r in re.search_all(script):
-			var offset = output.length() - script.length()
-			if r.get_string(2):
-				output = output.insert(offset + r.get_start(2), "thread")
-			else:
-				output = output.insert(offset + r.get_end(0), "thread, ")
-		script = output 
-	
-	var default_fragment:String = dialogue.default_fragment
-	var auto_start:bool = dialogue.auto_start
-	
-	var new_script = dialogue.get_script().duplicate(true)
-	new_script.source_code = script
-	new_script.reload()
-	new_script.take_over_path(dialogue.get_script().resource_path)
-	dialogue.set_script(new_script)
-	
-	
-	dialogue.default_fragment = default_fragment
-	dialogue.auto_start = auto_start
-	print( dialogue.get_script().source_code)
-	
-	pass
-
-
-const preprocessed_methods:Array = [
-	"step",
-	"_wait_semaphore",
-	"_is_preactive",
-	"ia",
-	"is_active",
-	"is_running",
-	"is_exitting",
-	"call_fragment",
-	"jump",
-	"cond",
-	"condition",
-	"shard",
-	"show",
-	"hide",
-	"halt",
-	"say",
-	"ask",
-	"menu",
-]
-
-
 ## Store related
 
 func _store(state):
@@ -138,6 +66,23 @@ enum ExecMode {
 }
 var current_dialogue_thread:Thread
 
+const thread_pool:Dictionary = {}
+
+func get_thread(id:int=0):
+	if not id:
+		id = OS.get_thread_caller_id()
+	return thread_pool.get(id)
+
+func add_this_thread(thread:Thread):
+	if thread:
+		thread_pool[thread.get_id()] = thread
+
+func remove_thread(thread:Thread):
+	if thread:
+		thread_pool.erase(thread.get_id())
+
+func remove_thread_id(id:int):
+	thread_pool.erase(id)
 
 func start_dialogue(dialogue_name:String, fragment_name:String):
 	print("Starting dialogue '%s'  '%s'" % [dialogue_name, fragment_name])
@@ -184,6 +129,7 @@ func _execution_loop(args):
 	var thread = args[0]
 	var dialogue = args[1]
 	var execution_stack = args[3]
+	add_this_thread(thread)
 	thread.set_meta("execution_stack", execution_stack)
 	thread.set_meta("execution_mode", ExecMode.Normal)
 	thread.set_meta("dialogue_name", args[2])
@@ -197,19 +143,20 @@ func _execution_loop(args):
 				execution_stack[0]['target_step'] = execution_stack[0]['step_counter']
 				execution_stack[0]['step_counter'] = 0
 				
-				dialogue.call(execution_stack[0]['fragment_name'], thread)
+				dialogue.call(execution_stack[0]['fragment_name'])
 				execution_stack.pop_front()
 			else:
 				push_error("Invalid fragment name '%s' in Dialogue '%s'" % [execution_stack[0]['fragment_name'], args[2]])
 				pass
 		else:
 			var fragment_name = execution_stack.pop_front()['fragment_name']
-			dialogue.call_fragment(thread, fragment_name)
+			dialogue.call_fragment(fragment_name)
 	self.call_deferred('_end_dialogue_thread', thread)
 
 func _end_dialogue_thread(thread):
 	if thread and thread.is_active():
 		thread.wait_to_finish()
+		remove_thread(thread)
 		if thread == current_dialogue_thread:
 			current_dialogue_thread = null
 			Agartha.store.set('_dialogue_execution_stack', null)
