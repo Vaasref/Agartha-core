@@ -70,4 +70,5 @@ script = ExtResource( 6 )
 
 [node name="Menu" type="Node" parent="."]
 script = ExtResource( 5 )
+
 [connection signal="timeout" from="Timeline/SkipDelay" to="Timeline" method="_skip"]
