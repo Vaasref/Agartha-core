@@ -71,18 +71,18 @@ const thread_pool:Dictionary = {}
 func get_thread(id:int=0):
 	if not id:
 		id = OS.get_thread_caller_id()
-	return thread_pool.get(id)
+	return thread_pool.get(str(id))
 
 func add_this_thread(thread:Thread):
 	if thread:
-		thread_pool[thread.get_id()] = thread
+		thread_pool[str(thread.get_id())] = thread
 
 func remove_thread(thread:Thread):
 	if thread:
-		thread_pool.erase(thread.get_id())
+		thread_pool.erase(str(thread.get_id()))
 
 func remove_thread_id(id:int):
-	thread_pool.erase(id)
+	thread_pool.erase(str(id))
 
 func start_dialogue(dialogue_name:String, fragment_name:String):
 	print("Starting dialogue '%s'  '%s'" % [dialogue_name, fragment_name])
