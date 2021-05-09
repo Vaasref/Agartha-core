@@ -75,7 +75,7 @@ func call_fragment(fragment_name:String):
 			if self.thread.get_meta("execution_stack"):
 				self.thread.get_meta("execution_stack")[0].step_counter += 1
 			self.thread.get_meta("execution_stack").push_front(entry)
-			self.call(fragment_name, thread)
+			self.call(fragment_name)
 			self.thread.get_meta("execution_stack").pop_front()
 			if self.thread.get_meta("execution_stack"):
 				self.thread.get_meta("execution_stack")[0].step_counter -= 1
