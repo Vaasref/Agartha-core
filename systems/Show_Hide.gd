@@ -49,7 +49,17 @@ func _store(state):
 	state.set("_tagged_sh_states", sh_states)
 
 func _get_truncated_path(node:Node):
-	return "." + str(node.get_path()).trim_prefix(str(Agartha.stage.get_path()))
+	var stage_path:PoolStringArray = str(Agartha.stage.get_path()).split('/', false)
+	var node_path:PoolStringArray = str(node.get_path()).split('/', false, stage_path.size())
+	while stage_path and node_path[0] == stage_path[0]:
+		node_path.remove(0)
+		stage_path.remove(0)
+	if stage_path:
+		for n in stage_path.size():
+			node_path.insert(0, "..")
+	else:
+		node_path.insert(0, ".")
+	return node_path.join("/")
 
 
 func _restore(state):
