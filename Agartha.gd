@@ -72,6 +72,7 @@ func exit_dialogue():
 
 
 func step():
+	Timeline.end_skipping()
 	Timeline.next_step()
 
 

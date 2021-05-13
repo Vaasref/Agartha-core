@@ -11,6 +11,7 @@ func next_step():
 
 
 func roll(amount:int):
+	end_skipping()
 	unblock_all()
 	amount += Agartha.Store.current_state_id
 	if amount >= 0 and amount < Agartha.Store.state_stack.size():
@@ -23,6 +24,7 @@ func roll(amount:int):
 
 
 func load_save(save):
+	end_skipping()
 	unblock_all()
 	Agartha.Store.restore_state_from_save(save)
 	var scene = Agartha.store.get("_scene")
@@ -78,7 +80,7 @@ func skip_stop(stop_priority:int):
 
 
 func _skip():
-	Agartha.step()
+	self.next_step()
 
 
 ###### Blocker system
