@@ -14,9 +14,8 @@ func next_step():
 	if any_blocker():
 		call_for_blocked_step()
 	else:
-		Agartha.Store.store_current_state()
+		Agartha.Store.prepare_storing()
 		call_for_storing()
-		Agartha.Store.finish_step()
 		call_for_step()
 
 

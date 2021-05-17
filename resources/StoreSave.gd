@@ -7,7 +7,7 @@ export var date:Dictionary
 export var encoded_image:String
 #Data
 export var state_stack:Array
-export var current_state:Array
+export var current_state:Resource
 export var current_state_id:int
 #Compatibility
 export var game_version:String
@@ -57,7 +57,7 @@ func get_screenshot_texture():
 
 
 func get_script_compatibility_code():
-	return "87e3b" # This code should only change when this script is made incompatible with previous version.
+	return "8950d" # This code should only change when this script is made incompatible with previous version.
 
 func is_compatible():
 	return Agartha.Saver.check_save_compatibility(self ,false) == Agartha.Saver.COMPATIBILITY_ERROR.NO_ERROR
