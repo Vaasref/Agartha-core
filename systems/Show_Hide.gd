@@ -24,7 +24,7 @@ func _get_character_parameters(first_tag_element:String):
 	if Agartha.store.has(first_tag_element):
 		var character = Agartha.store.get(first_tag_element)
 		if character is Resource:
-			output = character.character_say_parameters
+			output = character.say_parameters
 	return output
 
 
@@ -35,18 +35,23 @@ func _store(state):
 	var sh_states:Dictionary = {}
 	for n in get_tree().get_nodes_in_group("tagged"):
 		var entry:Dictionary = {}
-		var visible = null
 		if n is CanvasItem:
 			entry['visible'] = n.visible
 		if n.has_meta("_show_tag"):
 			entry['_show_tag'] = n.get_meta("_show_tag")
-			entry['_show_parameters'] = n.get_meta("_show_parameters")
+			var parameters = n.get_meta("_show_parameters")
+			if parameters:
+				entry['_show_parameters'] = parameters
 		elif n.has_meta("_hide_tag"):
 			entry['_hide_tag'] = n.get_meta("_hide_tag")
-			entry['_hide_parameters'] = n.get_meta("_hide_parameters")
-		sh_states[_get_truncated_path(n)] = entry
+			var parameters = n.get_meta("_hide_parameters")
+			if parameters:
+				entry['_hide_parameters'] = parameters
+		if entry:
+			sh_states[_get_truncated_path(n)] = entry
 		
 	state.set("_tagged_sh_states", sh_states)
+
 
 func _get_truncated_path(node:Node):
 	var stage_path:PoolStringArray = str(Agartha.stage.get_path()).split('/', false)
@@ -70,17 +75,29 @@ func _restore(state):
 		var n = Agartha.stage.get_node(path)
 		if n:
 			if '_show_tag' in sh_states[path]:
+				var tag = ""
+				if '_show_tag' in sh_states[path]:
+					tag = sh_states[path]['_show_tag']
+				var parameters = {}
+				if '_show_parameters' in sh_states[path]:
+					parameters = sh_states[path]['_show_parameters']
 				if 'visible' in sh_states[path] and sh_states[path]['visible']:
-					show_node(n, sh_states[path]['_show_tag'], sh_states[path]['_show_parameters'])
+					show_node(n, tag, parameters)
 				else:
-					n.set_meta("_show_tag", sh_states[path]['_show_tag'])
-					n.set_meta("_show_parameters", sh_states[path]['_show_parameters'])
+					n.set_meta("_show_tag", tag)
+					n.set_meta("_show_parameters", parameters)
 			elif '_hide_tag' in sh_states[path]:
+				var tag = ""
+				if '_hide_tag' in sh_states[path]:
+					tag = sh_states[path]['_hide_tag']
+				var parameters = {}
+				if '_hide_parameters' in sh_states[path]:
+					parameters = sh_states[path]['_hide_parameters']
 				if 'visible' in sh_states[path] and not sh_states[path]['visible']:
-					hide_node(n, sh_states[path]['_hide_tag'], sh_states[path]['_hide_parameters'])
+					hide_node(n, tag, parameters)
 				else:
-					n.set_meta("_hide_tag", sh_states[path]['_hide_tag'])
-					n.set_meta("_hide_parameters", sh_states[path]['_hide_parameters'])
+					n.set_meta("_hide_tag", tag)
+					n.set_meta("_hide_parameters", parameters)
 			elif n is CanvasItem and 'visible' in sh_states[path]:
 				n.visible = sh_states[path]['visible']
 
@@ -121,14 +138,13 @@ func show_node(node:Node, tag:String, parameters:Dictionary):
 
 
 func hide_node(node:Node, tag:String, parameters:Dictionary):
-	if node:
-		if node.has_method("hide") or node.has_method("_hide"):
-			node.set_meta("_hide_tag", tag)
-			node.set_meta("_hide_parameters", parameters)
-			if node.has_meta("_show_tag"):
-				node.set_meta("_show_tag", null)
-				node.set_meta("_show_parameters", null)
-			
+	if node and ((node is CanvasItem and node.visible) or node.has_method("_hide")):
+		node.set_meta("_hide_tag", tag)
+		node.set_meta("_hide_parameters", parameters)
+		if node.has_meta("_show_tag"):
+			node.set_meta("_show_tag", null)
+			node.set_meta("_show_parameters", null)
+		
 		if node.has_method("_hide"):
 			node.call("_hide", tag, parameters)
 		elif node.has_method("hide"):
