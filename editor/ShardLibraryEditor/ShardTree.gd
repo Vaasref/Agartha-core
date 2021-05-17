@@ -18,6 +18,9 @@ func update_tree():
 	
 	self.clear()
 	var root = self.create_item()
+	self.set_column_expand(0, true)
+	self.set_column_expand(1, false)
+	self.set_column_min_width(1, 25)
 	self.set_hide_root(true)
 	
 	for b in tree.keys():
