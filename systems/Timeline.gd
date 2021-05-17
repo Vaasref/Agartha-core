@@ -31,6 +31,7 @@ func roll(amount:int):
 			scene = ""
 		Agartha.StageManager.change_scene(scene, "", "", true)
 		call_for_restoring()
+	restoring = false
 
 
 func load_save(save):
