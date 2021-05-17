@@ -36,16 +36,26 @@ func _restore(state):
 	if state.has("_history_seen_fragments"):
 		seen_fragments = state.get("_history_seen_fragments").duplicate()
 
+func _step():
+	dialogue_log = []
 
 func log_say(character, text, parameters):
+	var entry = {'text':text}
 	var character_tag = ""
 	if character is Character:
-		character_tag = character.tag
-	dialogue_log.push_front([character_tag, text, parameters])
-	while dialogue_log.size() > log_max_length:
-		dialogue_log.pop_back()
-	Agartha.store.set("_history_dialogue_log", dialogue_log.duplicate(true))
+		entry['character_tag'] = character.tag
+	if parameters:
+		entry['parameters'] = parameters
+	dialogue_log.push_front(entry)
+	Agartha.store.set("_history_dialogue_log", dialogue_log)
 
+func get_dialogue_log():
+	var composite_log = []
+	for state in Agartha.state_stack:
+		var log_part = state[0].get("_history_dialogue_log")
+		if log_part:
+			composite_log.append_array(log_part)
+	return composite_log
 
 func clear_dialogue_log():
 	while dialogue_log.size() > 0:
