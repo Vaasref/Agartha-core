@@ -40,14 +40,15 @@ func _step():
 	dialogue_log = []
 
 func log_say(character, text, parameters):
-	var entry = {'text':text}
-	var character_tag = ""
-	if character is Character:
-		entry['character_tag'] = character.tag
-	if parameters:
-		entry['parameters'] = parameters
-	dialogue_log.push_front(entry)
-	Agartha.store.set("_history_dialogue_log", dialogue_log)
+	if not Agartha.Timeline.restoring:
+		var entry = {'text':text}
+		var character_tag = ""
+		if character is Character:
+			entry['character_tag'] = character.tag
+		if parameters:
+			entry['parameters'] = parameters
+		dialogue_log.push_front(entry)
+		Agartha.store.set("_history_dialogue_log", dialogue_log)
 
 func get_dialogue_log():
 	var composite_log = []
@@ -64,26 +65,28 @@ func clear_dialogue_log():
 
 
 func log_fragment(dialogue_name:String, fragment_name:String):
-	if fragment_name in seen_fragments:
-		seen_fragments[fragment_name] += 1
-	else:
-		seen_fragments[fragment_name] = 1
-	var specific = "%s.%s" % [dialogue_name, fragment_name]
-	if specific in seen_fragments:
-		seen_fragments[specific] += 1
-	else:
-		seen_fragments[specific] = 1
+	if not Agartha.Timeline.restoring:
+		if fragment_name in seen_fragments:
+			seen_fragments[fragment_name] += 1
+		else:
+			seen_fragments[fragment_name] = 1
+		var specific = "%s.%s" % [dialogue_name, fragment_name]
+		if specific in seen_fragments:
+			seen_fragments[specific] += 1
+		else:
+			seen_fragments[specific] = 1
 
 
 func log_shard(shard_id):
-	if shard_id is String:
-		if shard_id in seen_shards:
-			seen_shards[shard_id] += 1
-		else:
-			seen_shards[shard_id] = 1
-	elif shard_id is Array:
-		for sh_id in shard_id:
-			log_shard(sh_id)
+	if not Agartha.Timeline.restoring:
+		if shard_id is String:
+			if shard_id in seen_shards:
+				seen_shards[shard_id] += 1
+			else:
+				seen_shards[shard_id] = 1
+		elif shard_id is Array:
+			for sh_id in shard_id:
+				log_shard(sh_id)
 
 
 # Persistent part
