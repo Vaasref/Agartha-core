@@ -1,5 +1,15 @@
 extends Node
 
+var pending_step = false
+var restoring = false
+
+func step():
+	self.pending_step = true
+
+func _process(_delta):
+	if pending_step and not restoring:
+		next_step()
+
 func next_step():
 	if any_blocker():
 		call_for_blocked_step()
@@ -11,6 +21,7 @@ func next_step():
 
 
 func roll(amount:int):
+	restoring = true
 	end_skipping()
 	unblock_all()
 	amount += Agartha.Store.current_state_id
@@ -24,6 +35,7 @@ func roll(amount:int):
 
 
 func load_save(save):
+	restoring = true
 	end_skipping()
 	unblock_all()
 	Agartha.Store.restore_state_from_save(save)
@@ -36,15 +48,19 @@ func load_save(save):
 
 func call_for_step():
 	get_tree().get_root().propagate_call("_step")
+	pending_step = false
 
 func call_for_blocked_step():
 	get_tree().get_root().propagate_call("_blocked_step")
+	pending_step = false
 
 func call_for_storing():
 	get_tree().get_root().propagate_call("_store", [Agartha.Store.get_current_state()])
 
 func call_for_restoring():
 	get_tree().get_root().propagate_call("_restore", [Agartha.Store.get_current_state()])
+	restoring = false
+	pending_step = false
 
 
 ###### Skipping system
@@ -80,7 +96,7 @@ func skip_stop(stop_priority:int):
 
 
 func _skip():
-	self.next_step()
+	step()
 
 
 ###### Blocker system

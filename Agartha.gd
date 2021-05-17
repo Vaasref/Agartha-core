@@ -35,6 +35,7 @@ signal ask_return(return_value)
 signal menu(entries, parameters)
 signal menu_return(return_value)
 
+
 signal loading(progress)# progress can be either a float or a RIL. IF float, NAN is for undefined loading, [0:1[ represent the progress and 1 that the loading is finished.
 signal saved()
 
@@ -51,6 +52,7 @@ func _ready():
 	ShardLibrarian.init()
 	History.init()
 	Saver.init()
+	
 
 
 func change_scene(scene_id:String, dialogue_name:String="", fragment_name:String=""):
@@ -73,7 +75,7 @@ func exit_dialogue():
 
 func step():
 	Timeline.end_skipping()
-	Timeline.next_step()
+	Timeline.step()
 
 
 func reset():
