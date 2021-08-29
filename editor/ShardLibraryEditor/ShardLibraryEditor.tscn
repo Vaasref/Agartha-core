@@ -105,12 +105,13 @@ margin_right = 1260.0
 margin_bottom = 700.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
+split_offset = 80
 __meta__ = {
 "_edit_use_anchors_": false
 }
 
 [node name="ShardTree" type="Tree" parent="VBoxContainer/HSplitContainer"]
-margin_right = 100.0
+margin_right = 180.0
 margin_bottom = 700.0
 rect_min_size = Vector2( 100, 0 )
 size_flags_vertical = 3
@@ -121,14 +122,14 @@ select_mode = 1
 script = ExtResource( 2 )
 
 [node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/HSplitContainer"]
-margin_left = 112.0
+margin_left = 192.0
 margin_right = 1260.0
 margin_bottom = 700.0
 
 [node name="ShardEditor" parent="VBoxContainer/HSplitContainer/VBoxContainer" instance=ExtResource( 3 )]
 anchor_right = 0.0
 anchor_bottom = 0.0
-margin_right = 1148.0
+margin_right = 1068.0
 margin_bottom = 587.0
 text = ":shard_0:
 	\"Text line without sayer.\"
@@ -142,16 +143,16 @@ text = ":shard_0:
 
 [node name="GridContainer" type="GridContainer" parent="VBoxContainer/HSplitContainer/VBoxContainer"]
 margin_top = 591.0
-margin_right = 1148.0
+margin_right = 1068.0
 margin_bottom = 610.0
 columns = 3
 
 [node name="ErrorDisplay" type="Label" parent="VBoxContainer/HSplitContainer/VBoxContainer/GridContainer"]
-margin_right = 996.0
+margin_right = 916.0
 margin_bottom = 19.0
 size_flags_horizontal = 3
-custom_fonts/font = SubResource( 1 )
 custom_colors/font_color = Color( 0.86, 0.08, 0.24, 1 )
+custom_fonts/font = SubResource( 1 )
 script = ExtResource( 5 )
 
 [node name="Timer" type="Timer" parent="VBoxContainer/HSplitContainer/VBoxContainer/GridContainer/ErrorDisplay"]
@@ -159,9 +160,9 @@ wait_time = 0.5
 one_shot = true
 
 [node name="LibraryNameLabel" type="Label" parent="VBoxContainer/HSplitContainer/VBoxContainer/GridContainer"]
-margin_left = 1000.0
+margin_left = 920.0
 margin_top = 1.0
-margin_right = 1080.0
+margin_right = 1000.0
 margin_bottom = 18.0
 custom_fonts/font = SubResource( 2 )
 text = "no library"
@@ -169,9 +170,9 @@ align = 1
 script = SubResource( 3 )
 
 [node name="CursorPositionLabel" type="Label" parent="VBoxContainer/HSplitContainer/VBoxContainer/GridContainer"]
-margin_left = 1084.0
+margin_left = 1004.0
 margin_top = 1.0
-margin_right = 1148.0
+margin_right = 1068.0
 margin_bottom = 18.0
 custom_fonts/font = SubResource( 2 )
 text = "   1:  0"
@@ -179,7 +180,7 @@ script = SubResource( 4 )
 
 [node name="HSeparator" type="HSeparator" parent="VBoxContainer/HSplitContainer/VBoxContainer"]
 margin_top = 614.0
-margin_right = 1148.0
+margin_right = 1068.0
 margin_bottom = 618.0
 __meta__ = {
 "_edit_use_anchors_": false
@@ -187,7 +188,7 @@ __meta__ = {
 
 [node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer/HSplitContainer/VBoxContainer"]
 margin_top = 622.0
-margin_right = 1148.0
+margin_right = 1068.0
 margin_bottom = 622.0
 scroll_vertical_enabled = false
 
@@ -197,13 +198,13 @@ button = ExtResource( 7 )
 
 [node name="PanelContainer" type="PanelContainer" parent="VBoxContainer/HSplitContainer/VBoxContainer"]
 margin_top = 626.0
-margin_right = 1148.0
+margin_right = 1068.0
 margin_bottom = 700.0
 
 [node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/HSplitContainer/VBoxContainer/PanelContainer"]
 margin_left = 7.0
 margin_top = 7.0
-margin_right = 1141.0
+margin_right = 1061.0
 margin_bottom = 67.0
 custom_constants/margin_right = 10
 custom_constants/margin_top = 10
@@ -213,11 +214,11 @@ custom_constants/margin_bottom = 10
 [node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/HSplitContainer/VBoxContainer/PanelContainer/MarginContainer"]
 margin_left = 10.0
 margin_top = 10.0
-margin_right = 1124.0
+margin_right = 1044.0
 margin_bottom = 50.0
 
 [node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/HSplitContainer/VBoxContainer/PanelContainer/MarginContainer/HBoxContainer"]
-margin_right = 793.0
+margin_right = 713.0
 margin_bottom = 40.0
 size_flags_horizontal = 3
 
@@ -241,8 +242,8 @@ anchor_right = 1.0
 anchor_bottom = 0.5
 grow_vertical = 2
 mouse_filter = 2
-custom_styles/normal = SubResource( 7 )
 custom_fonts/normal_font = SubResource( 6 )
+custom_styles/normal = SubResource( 7 )
 bbcode_enabled = true
 bbcode_text = "[center][s]S[/s][/center]"
 text = "S"
@@ -257,8 +258,8 @@ margin_left = 88.0
 margin_right = 128.0
 margin_bottom = 40.0
 rect_min_size = Vector2( 40, 40 )
-custom_fonts/font = SubResource( 6 )
 custom_colors/font_color_disabled = Color( 0, 0, 0, 1 )
+custom_fonts/font = SubResource( 6 )
 
 [node name="RichTextLabel2" type="RichTextLabel" parent="VBoxContainer/HSplitContainer/VBoxContainer/PanelContainer/MarginContainer/HBoxContainer/HBoxContainer/Underline"]
 anchor_top = 0.5
@@ -266,8 +267,8 @@ anchor_right = 1.0
 anchor_bottom = 0.5
 grow_vertical = 2
 mouse_filter = 2
-custom_styles/normal = SubResource( 7 )
 custom_fonts/normal_font = SubResource( 6 )
+custom_styles/normal = SubResource( 7 )
 bbcode_enabled = true
 bbcode_text = "[center][u]U[/u][/center]"
 text = "U"
@@ -286,14 +287,14 @@ custom_fonts/font = SubResource( 8 )
 text = "I"
 
 [node name="VSeparator" type="VSeparator" parent="VBoxContainer/HSplitContainer/VBoxContainer/PanelContainer/MarginContainer/HBoxContainer"]
-margin_left = 797.0
-margin_right = 817.0
+margin_left = 717.0
+margin_right = 737.0
 margin_bottom = 40.0
 custom_constants/separation = 20
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="VBoxContainer/HSplitContainer/VBoxContainer/PanelContainer/MarginContainer/HBoxContainer"]
-margin_left = 821.0
-margin_right = 1114.0
+margin_left = 741.0
+margin_right = 1034.0
 margin_bottom = 40.0
 __meta__ = {
 "_edit_use_anchors_": false
@@ -345,11 +346,12 @@ script = ExtResource( 8 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
-[connection signal="open_library" from="." to="VBoxContainer/HSplitContainer/VBoxContainer/GridContainer/LibraryNameLabel" method="_on_open_library"]
-[connection signal="open_library" from="." to="VBoxContainer/HSplitContainer/VBoxContainer/PanelContainer/MarginContainer/HBoxContainer/HBoxContainer2/Save" method="_on_open_library"]
-[connection signal="open_library" from="." to="VBoxContainer/HSplitContainer/ShardTree" method="_on_open_library"]
-[connection signal="open_library" from="." to="VBoxContainer/HSplitContainer/VBoxContainer/ShardEditor" method="open_shard_library"]
+
 [connection signal="open_library" from="." to="FileDialog" method="_on_open_library"]
+[connection signal="open_library" from="." to="VBoxContainer/HSplitContainer/ShardTree" method="_on_open_library"]
+[connection signal="open_library" from="." to="VBoxContainer/HSplitContainer/VBoxContainer/PanelContainer/MarginContainer/HBoxContainer/HBoxContainer2/Save" method="_on_open_library"]
+[connection signal="open_library" from="." to="VBoxContainer/HSplitContainer/VBoxContainer/GridContainer/LibraryNameLabel" method="_on_open_library"]
+[connection signal="open_library" from="." to="VBoxContainer/HSplitContainer/VBoxContainer/ShardEditor" method="open_shard_library"]
 [connection signal="button_pressed" from="VBoxContainer/HSplitContainer/ShardTree" to="VBoxContainer/HSplitContainer/ShardTree" method="_on_item_button_pressed"]
 [connection signal="item_rmb_selected" from="VBoxContainer/HSplitContainer/ShardTree" to="VBoxContainer/HSplitContainer/ShardTree" method="_on_item_rmb_selected"]
 [connection signal="item_selected" from="VBoxContainer/HSplitContainer/ShardTree" to="VBoxContainer/HSplitContainer/ShardTree" method="_on_item_selected"]
