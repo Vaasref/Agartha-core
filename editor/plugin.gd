@@ -17,20 +17,26 @@ func _enter_tree():
 	make_visible(false)
 
 func _on_use_shortcut(shortcut:String):
-	if shortcut.is_abs_path():
-		var re = RegEx.new()
-		re.compile("(.*\\.(?:tscn::[0-9]+|gd))(?::([0-9]+))?$")
-		var result = re.search(shortcut)
-		if result.get_string(2):
-			shortcut = result.get_string(1)
-		get_editor_interface().select_file(shortcut)
-		if result.get_string(2):
-			get_editor_interface().get_script_editor().goto_line(int(result.get_string(2))-1)
-		match shortcut.get_extension():
-			"tscn":
-				get_editor_interface().open_scene_from_path(shortcut)
-			_:
-				get_editor_interface().inspect_object(load(shortcut))
+	var re = RegEx.new()
+	re.compile("((res:\\/\\/.*\\.([a-z]+))(::[0-9]+)?)(?::([0-9]+))?")
+	var result = re.search(shortcut)
+	if result:
+		var need_scene:bool = result.get_string(3) == "tscn" or result.get_string(3) == "scn"
+		var is_scene_object:bool = need_scene and result.get_string(4)
+		var is_scene:bool = need_scene and not is_scene_object
+		
+		if need_scene:
+			get_editor_interface().open_scene_from_path(result.get_string(2))
+			yield(self, 'scene_changed')
+		
+		if not is_scene:
+			get_editor_interface().call_deferred('inspect_object', load(result.get_string(1)))
+		
+		if not is_scene_object:
+			get_editor_interface().call_deferred('select_file', result.get_string(1))
+		
+		if result.get_string(5) and (result.get_string(3) != "gd" or is_scene_object):
+			get_editor_interface().get_script_editor().call_deferred('goto_line', int(result.get_string(5))-1)
 
 
 func _exit_tree():
