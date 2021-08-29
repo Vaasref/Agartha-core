@@ -18,7 +18,14 @@ func _enter_tree():
 
 func _on_use_shortcut(shortcut:String):
 	if shortcut.is_abs_path():
+		var re = RegEx.new()
+		re.compile("(.*\\.(?:tscn::[0-9]+|gd))(?::([0-9]+))?$")
+		var result = re.search(shortcut)
+		if result.get_string(2):
+			shortcut = result.get_string(1)
 		get_editor_interface().select_file(shortcut)
+		if result.get_string(2):
+			get_editor_interface().get_script_editor().goto_line(int(result.get_string(2))-1)
 		match shortcut.get_extension():
 			"tscn":
 				get_editor_interface().open_scene_from_path(shortcut)
