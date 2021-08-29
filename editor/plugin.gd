@@ -27,7 +27,8 @@ func _on_use_shortcut(shortcut:String):
 		
 		if need_scene:
 			get_editor_interface().open_scene_from_path(result.get_string(2))
-			yield(self, 'scene_changed')
+			if result.get_string(2) != get_tree().edited_scene_root.filename:
+				yield(self, 'scene_changed')
 		
 		if not is_scene:
 			get_editor_interface().call_deferred('inspect_object', load(result.get_string(1)))
