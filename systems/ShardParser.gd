@@ -77,7 +77,7 @@ func parse_line(line:String):
 		else:
 			output = [LineType.ERROR, LineType.SHARD_ID]#Returns and error with shard_id flavor
 	elif trimmed_line.begins_with("show "):
-		re.compile("[\\s]*show((?: +[\\w]+)+)$")
+		re.compile("show((?: +[\\w]+)+)$")
 		result = re.search(trimmed_line)
 		if result:
 			output = [LineType.SHOW, result.get_string(1).strip_edges()] + output
