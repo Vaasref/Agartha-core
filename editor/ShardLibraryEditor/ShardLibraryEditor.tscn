@@ -348,10 +348,10 @@ __meta__ = {
 }
 
 [connection signal="open_library" from="." to="FileDialog" method="_on_open_library"]
+[connection signal="open_library" from="." to="VBoxContainer/HSplitContainer/VBoxContainer/ShardEditor" method="open_shard_library"]
 [connection signal="open_library" from="." to="VBoxContainer/HSplitContainer/ShardTree" method="_on_open_library"]
 [connection signal="open_library" from="." to="VBoxContainer/HSplitContainer/VBoxContainer/PanelContainer/MarginContainer/HBoxContainer/HBoxContainer2/Save" method="_on_open_library"]
 [connection signal="open_library" from="." to="VBoxContainer/HSplitContainer/VBoxContainer/GridContainer/LibraryNameLabel" method="_on_open_library"]
-[connection signal="open_library" from="." to="VBoxContainer/HSplitContainer/VBoxContainer/ShardEditor" method="open_shard_library"]
 [connection signal="button_pressed" from="VBoxContainer/HSplitContainer/ShardTree" to="VBoxContainer/HSplitContainer/ShardTree" method="_on_item_button_pressed"]
 [connection signal="item_rmb_selected" from="VBoxContainer/HSplitContainer/ShardTree" to="VBoxContainer/HSplitContainer/ShardTree" method="_on_item_rmb_selected"]
 [connection signal="item_selected" from="VBoxContainer/HSplitContainer/ShardTree" to="VBoxContainer/HSplitContainer/ShardTree" method="_on_item_selected"]
@@ -361,6 +361,7 @@ __meta__ = {
 [connection signal="save_new_library" from="VBoxContainer/HSplitContainer/VBoxContainer/ShardEditor" to="FileDialog" method="_on_save_new_library"]
 [connection signal="script_error" from="VBoxContainer/HSplitContainer/VBoxContainer/ShardEditor" to="VBoxContainer/HSplitContainer/VBoxContainer/GridContainer/ErrorDisplay" method="_on_script_error"]
 [connection signal="update_cursor" from="VBoxContainer/HSplitContainer/VBoxContainer/ShardEditor" to="VBoxContainer/HSplitContainer/VBoxContainer/GridContainer/CursorPositionLabel" method="_on_ShardEditor_update_cursor"]
+[connection signal="update_shard_library" from="VBoxContainer/HSplitContainer/VBoxContainer/ShardEditor" to="FileDialog" method="_on_update_shard_library"]
 [connection signal="update_shard_library" from="VBoxContainer/HSplitContainer/VBoxContainer/ShardEditor" to="VBoxContainer/HSplitContainer/ShardTree" method="_on_update_shard_library"]
 [connection signal="update_shortcuts" from="VBoxContainer/HSplitContainer/VBoxContainer/ShardEditor" to="VBoxContainer/HSplitContainer/VBoxContainer/ScrollContainer/ShorcutTabs" method="_on_update_shortcuts"]
 [connection signal="timeout" from="VBoxContainer/HSplitContainer/VBoxContainer/GridContainer/ErrorDisplay/Timer" to="VBoxContainer/HSplitContainer/VBoxContainer/GridContainer/ErrorDisplay" method="_on_timeout"]

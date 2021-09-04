@@ -7,7 +7,7 @@ var parser = ShardParser.new()
 signal insert_shard_script(script)
 signal new_shard_library(new_library)
 
-var shard_library
+var shard_library:Resource
 
 
 enum Mode{
@@ -67,7 +67,8 @@ func _on_file_selected(path):
 		Mode.EXPORT:
 			export_library(path)
 		Mode.SAVE_NEW_LIBRARY:
-			save_library(path)
+			save_library(path, temp_new_library)
+			self.emit_signal("new_shard_library", load(path) as ShardLibrary)
 
 
 
@@ -93,11 +94,10 @@ func import_library(script_path, library_path):
 
 var temp_new_library
 
-func save_library(library_path):
-	var error = ResourceSaver.save(library_path, temp_new_library)
+func save_library(library_path, library):
+	var error = ResourceSaver.save(library_path, library)
 	if error:
-		push_error("Error when saving new shard library.")
-	self.emit_signal("new_shard_library", load(library_path) as ShardLibrary)
+		push_error("Error when saving shard library.")
 
 
 
@@ -137,3 +137,8 @@ func _on_save_new_library(new_library):
 	current_mode = Mode.SAVE_NEW_LIBRARY
 	self.window_title = "Save new library as ..."
 	self.popup_centered()
+
+
+func _on_update_shard_library():
+	if shard_library:
+		save_library(shard_library.resource_path, shard_library)
