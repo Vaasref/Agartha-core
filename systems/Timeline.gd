@@ -120,7 +120,7 @@ func unblock(id, full:bool=false, amount:int=1):
 		if full or blockers[id] <= amount:
 			blockers.erase(id)
 		else:
-			blockers[id] += amount
+			blockers[id] -= amount
 
 func get_blocker(id):
 	if id in blockers:
