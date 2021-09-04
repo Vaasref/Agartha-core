@@ -112,17 +112,14 @@ func open_shard(shard_id):
 			self.text = ":%s:\n" % shard_id
 
 
-func update_shard_library(script):
-	if shard_library:
-		shard_library.save_script(script)
-
-
 func _on_save_button_pressed():
 	var script = parser.parse_shard(self.text)
 	var error = update_text(script)
-	if not error:
+	if error:
+		push_error(error)
+	else:
 		if shard_library:
-			update_shard_library(script)
+			shard_library.save_script(script)
 			self.emit_signal('update_shard_library')
 		else:
 			var new_library = ShardLibrary.new()
