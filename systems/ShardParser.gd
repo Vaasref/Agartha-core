@@ -47,68 +47,68 @@ func parse_line(line:String):
 	var output = []
 	var re = RegEx.new()
 	var result
-	var comment = false
+	var comment = ""
 	
 	re.compile("([^#\\s]?)([ \\t]*(?<!\\\\)#[^\\n]*)")
 	result = re.search(line)
 	if result:
 		if result.get_string(1):
 			line = line.substr(0, result.get_start(2))
-			output = [result.get_string(2).strip_edges()]
+			comment = result.get_string(2).strip_edges()
 		else:
-			output = [LineType.COMMENT, result.get_string(2)]
+			output = [LineType.COMMENT, result.get_string(2).strip_edges()]
 	
 	var trimmed_line = line.strip_edges()
 	
-	if output.size() == 2:#Check if the line is a comment line 
+	if output:#Check if the line is a comment line 
 		pass
 	elif trimmed_line.begins_with("@"):
 		re.compile("@([^@\\s]+)@")
 		result = re.search(trimmed_line)
 		if result:
-			output = [LineType.SHORTCUT, result.get_string(1)] + output
+			output = [LineType.SHORTCUT, result.get_string(1), comment]
 		else:
 			output = [LineType.ERROR, LineType.SHORTCUT]#Returns and error with shortcut flavor
 	elif trimmed_line.ends_with(":"):
 		re.compile("^:([\\w]+|\\$):[\\s]*")
 		result = re.search(line)
 		if result:
-			output = [LineType.SHARD_ID, result.get_string(1)] + output
+			output = [LineType.SHARD_ID, result.get_string(1), comment]
 		else:
 			output = [LineType.ERROR, LineType.SHARD_ID]#Returns and error with shard_id flavor
 	elif trimmed_line.begins_with("show "):
 		re.compile("show((?: +[\\w]+)+)$")
 		result = re.search(trimmed_line)
 		if result:
-			output = [LineType.SHOW, result.get_string(1).strip_edges()] + output
+			output = [LineType.SHOW, result.get_string(1).strip_edges(), comment]
 		else:
 			output = [LineType.ERROR, LineType.SHOW]#Returns and error with show flavor	
 	elif trimmed_line.begins_with("hide "):
 		re.compile("hide((?: +[\\w]+)+)$")
 		result = re.search(trimmed_line)
 		if result:
-			output = [LineType.HIDE, result.get_string(1).strip_edges()] + output
+			output = [LineType.HIDE, result.get_string(1).strip_edges(), comment]
 		else:
 			output = [LineType.ERROR, LineType.HIDE]#Returns and error with hide flavor
 	elif trimmed_line.begins_with("play "):
 		re.compile("play((?: +[\\w]+)+)$")
 		result = re.search(trimmed_line)
 		if result:
-			output = [LineType.PLAY, result.get_string(1).strip_edges()] + output
+			output = [LineType.PLAY, result.get_string(1).strip_edges(), comment]
 		else:
 			output = [LineType.ERROR, LineType.PLAY]#Returns and error with play flavor
 	elif trimmed_line.begins_with("halt "):
 		re.compile("halt[\\s]+([0-9]+)$")
 		result = re.search(trimmed_line)
 		if result:
-			output = [LineType.HALT, int(result.get_string(1))] + output
+			output = [LineType.HALT, int(result.get_string(1)), comment]
 		else:
 			output = [LineType.ERROR, LineType.HALT]#Returns and error with halt flavor
 	elif "\"" in trimmed_line:
-		re.compile("^([a-zA-Z_][\\w]*|)[\\s]*\"(.*)\"$")
+		re.compile("^(?:([a-zA-Z_][\\w]*)((?: [a-zA-Z_][\\w]*)*)|)[\\s]*\"(.*)\"$")
 		result = re.search(trimmed_line)
 		if result:
-			output = [LineType.SAY, result.get_string(1), result.get_string(2)] + output
+			output = [LineType.SAY, result.get_string(1), result.get_string(3), result.get_string(2).split(' ', false), comment]
 		else:
 			output = [LineType.ERROR, LineType.SAY]#Returns and error with say flavor
 	elif trimmed_line:
@@ -121,18 +121,19 @@ func parse_line(line:String):
 
 func compose_shard(script):
 	var output = ""
-	var comment
-	var sayer
 	for i in script.size():
 		var l = script[i]
 		if l:
-			comment = ""
+			print("Line: %s" % [l])
+			var comment = ""
 			match l[0]:
 				LineType.SHARD_ID, LineType.SHORTCUT, LineType.SHOW, LineType.HIDE, LineType.PLAY, LineType.HALT:
-					if l.size() == 3:
+					if l.size() == 3 and l[2]:
 						comment = "  %s" % l[2]
 				LineType.SAY:
-					if l.size() == 4:
+					if l.size() == 5 and l[4]:
+						comment = "  %s" % l[4]
+					elif l.size() == 4:#TODO remove temporary compatibility code
 						comment = "  %s" % l[3]
 			
 			match l[0]:
@@ -143,11 +144,14 @@ func compose_shard(script):
 				LineType.COMMENT:
 					output += "\t%s" % l[1]
 				LineType.SAY:
+					var sayer = ""
 					if l[1]:
 						sayer = "%s " % l[1]
-					else:
-						sayer = ""
-					output += "\t%s\"%s\"%s" % [sayer, l[2], comment]
+					var flags = ""
+					if  l.size() == 5 and l[3]:#TODO remove temporary compatibility code "l.size() == 5 and "
+						for f in l[3]:
+							flags += "%s " % f
+					output += "\t%s%s\"%s\"%s" % [sayer, flags, l[2], comment]
 				LineType.SHOW:
 					output += "\tshow %s%s" % [l[1], comment]
 				LineType.HIDE:

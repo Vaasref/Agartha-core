@@ -133,7 +133,10 @@ func shard(shard_id:String, exact_id:bool=true, shard_library:Resource=null):
 				if l:
 					match l[0]:
 						Agartha.ShardParser.LineType.SAY:
-							say(l[1], l[2])
+							var flags = {}
+							for f in l[3]:
+								flags[f] = true
+							say(l[1], l[2], flags)
 							step()
 						Agartha.ShardParser.LineType.SHOW:
 							show(l[1])
