@@ -1,0 +1,119 @@
+[gd_scene load_steps=4 format=2]
+
+[sub_resource type="GDScript" id=2]
+script/source = "tool
+extends VSplitContainer
+
+signal init(plugin)
+
+func init(plugin:EditorPlugin):
+	self.emit_signal(\"init\", plugin)
+"
+
+[sub_resource type="GDScript" id=1]
+script/source = "tool
+extends Tree
+
+var plugin:EditorPlugin
+
+var bundles:Array
+
+var script_icon:Texture
+
+func init(_plugin):
+	self.plugin = _plugin
+	script_icon = self.plugin.base_control.get_icon(\"Script\", \"EditorIcons\")
+	self.plugin.connect(\"shard_library_set\", self, '_on_library_set')
+	self.plugin.connect(\"shard_library_changed\", self, '_on_library_changed')
+
+func _on_library_set(new_library, old_library):
+	update_tree()
+
+func _on_library_changed():
+	update_tree()
+
+
+# Update tree logic
+
+func update_tree():
+	var tree = plugin.shard_library.get_tree()
+	
+	self.clear()
+	var root = self.create_item()
+	self.set_column_expand(0, true)
+	self.set_hide_root(true)
+	
+	for b in tree.keys():
+		place_item_in_tree(root, tree[b], b)
+
+func place_item_in_tree(parent, branch, id):
+	var tree_item = self.create_item(parent)
+	var id_split = id.split(\"_\")
+	tree_item.set_text(0, id_split[id_split.size()-1])
+	tree_item.set_meta(\"shard_id\", id)
+	if id in plugin.shard_library.shards:
+		tree_item.set_icon(0, script_icon)
+	else:
+		tree_item.set_custom_color(0, Color.silver)
+	for b in branch.keys():
+		place_item_in_tree(tree_item, branch[b], b)
+
+
+func _on_item_activated():
+	plugin.open_shard(self.get_selected().get_meta(\"shard_id\"))
+"
+
+[sub_resource type="GDScript" id=3]
+script/source = "tool
+extends ItemList
+
+var plugin:EditorPlugin
+
+func init(_plugin):
+	self.plugin = _plugin
+	self.plugin.connect(\"shard_library_set\", self, 'update')
+	self.plugin.connect(\"shard_library_changed\", self, 'update')
+
+func update(_nl=null, _ol=null):
+	self.clear()
+	if plugin.shard_library:
+		var shards = plugin.shard_library.get_shards()
+		for l in shards:
+			if l and l[0] == ShardLibrary.LineType.SHORTCUT:
+				var id = get_item_count()
+				add_item(l[1].get_file())
+				set_item_metadata(id, l[1])
+
+func _on_item_activated(id:int):
+	plugin.use_shortcut(get_item_metadata(id))
+"
+
+[node name="Shard Library" type="VSplitContainer"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = SubResource( 2 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Tree" type="Tree" parent="."]
+margin_right = 1280.0
+margin_bottom = 474.0
+size_flags_vertical = 3
+script = SubResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="ItemList" type="ItemList" parent="."]
+margin_top = 486.0
+margin_right = 1280.0
+margin_bottom = 720.0
+size_flags_vertical = 3
+size_flags_stretch_ratio = 0.5
+script = SubResource( 3 )
+
+[connection signal="init" from="." to="Tree" method="init"]
+[connection signal="init" from="." to="ItemList" method="init"]
+[connection signal="item_activated" from="Tree" to="Tree" method="_on_item_activated"]
+[connection signal="item_activated" from="ItemList" to="ItemList" method="_on_item_activated"]

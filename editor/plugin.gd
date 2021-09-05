@@ -4,9 +4,11 @@ extends EditorPlugin
 const AgarthaIcon = preload("res://addons/Agartha/editor/icon.svg")
 
 const ShardLibraryEditor = preload("res://addons/Agartha/editor/ShardLibraryEditor/ShardLibraryEditor.tscn")
+const ShardLibraryDock = preload("res://addons/Agartha/editor/ShardLibraryDock/ShardLibraryDock.tscn")
 
 
 var shard_library_editor_instance
+var shard_library_dock_instance
 
 var base_control:Control
 
@@ -75,11 +77,17 @@ func _enter_tree():
 	get_editor_interface().get_editor_viewport().add_child(shard_library_editor_instance)
 	shard_library_editor_instance.init(self)
 	
+	shard_library_dock_instance = ShardLibraryDock.instance()
+	add_control_to_dock(DOCK_SLOT_LEFT_UL, shard_library_dock_instance)
+	shard_library_dock_instance.init(self)
+	
 	make_visible(false)
 
 func _exit_tree():
 	if shard_library_editor_instance:
 		shard_library_editor_instance.queue_free()
+	if shard_library_dock_instance:
+		shard_library_dock_instance.queue_free()
 
 func has_main_screen():
 	return true
