@@ -73,6 +73,7 @@ func save_script(script):
 			save_shard(script, shard_ids[i], script.size())
 		else:
 			save_shard(script, shard_ids[i], shard_ids[i+1])
+	self.emit_signal("changed")
 
 
 func save_shard(script, start, end):
@@ -92,3 +93,8 @@ func remove_shard(shard_id, exact:bool=false):
 		for s in self.shards.keys():
 			if s.begins_with(shard_id):
 				self.shards.erase(s)
+	self.emit_signal("changed")
+
+func set_path(value:String):
+	resource_path = value
+	self.emit_signal("changed")
