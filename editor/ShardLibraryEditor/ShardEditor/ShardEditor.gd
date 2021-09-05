@@ -1,22 +1,28 @@
 tool
 extends TextEdit
 
+var plugin:EditorPlugin
 var ShardParser = preload("res://addons/Agartha/systems/ShardParser.gd")
 var parser = ShardParser.new()
 
 signal script_error(error)
-signal update_shard_library()
 signal update_shortcuts(shortcuts)
 signal update_cursor(cursor_line, cursor_column)
-signal save_new_library(new_library)
 
 
-func _ready():
-	update()
-
-
-func update():
+func init(_plugin):
+	self.plugin = _plugin
+	self.plugin.connect("shard_library_set", self, '_on_library_set')
+	self.plugin.connect("shard_library_changed", self, '_on_library_changed')
+	self.plugin.connect('shard_library_open_shard', self, '_on_open_shard')
 	update_colors()
+
+func _on_library_set(new_library, old_library):
+	self.text = ""
+
+
+func _on_library_changed():
+	pass
 
 
 func update_colors():
@@ -91,17 +97,9 @@ func update_text(script):
 	return error
 
 
-var shard_library:ShardLibrary
-
-func open_shard_library(library, _clear_editor):
-	if _clear_editor:
-		self.text = ""
-	shard_library = library
-
-
-func open_shard(shard_id):
-	if shard_library:
-		var shard = shard_library.get_shards(shard_id)
+func _on_open_shard(shard_id):
+	if plugin.shard_library:
+		var shard = plugin.shard_library.get_shards(shard_id)
 		if shard:
 			if shard is String:
 				self.text = shard
@@ -118,13 +116,12 @@ func _on_save_button_pressed():
 	if error:
 		push_error(error)
 	else:
-		if shard_library:
-			shard_library.save_script(script)
-			self.emit_signal('update_shard_library')
+		if plugin.shard_library:
+			plugin.shard_library.save_script(script)
 		else:
 			var new_library = ShardLibrary.new()
 			new_library.save_script(script)
-			self.emit_signal('save_new_library', new_library)
+			plugin.shard_library = new_library
 
 
 func can_drop_data(position, data):

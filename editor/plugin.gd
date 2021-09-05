@@ -5,18 +5,37 @@ const AgarthaIcon = preload("res://addons/Agartha/editor/icon.svg")
 
 const ShardLibraryEditor = preload("res://addons/Agartha/editor/ShardLibraryEditor/ShardLibraryEditor.tscn")
 
+
 var shard_library_editor_instance
 
+var base_control:Control
 
-func _enter_tree():
-	shard_library_editor_instance = ShardLibraryEditor.instance()
-	shard_library_editor_instance.base_control = get_editor_interface().get_base_control()
-	shard_library_editor_instance.connect("use_shortcut", self, "_on_use_shortcut")
-	get_editor_interface().get_editor_viewport().add_child(shard_library_editor_instance)
-	
-	make_visible(false)
+var shard_library:ShardLibrary setget set_shard_library
+signal shard_library_set(new_library, old_library)
+signal shard_library_changed()
+signal shard_library_open_shard(shard_id)
 
-func _on_use_shortcut(shortcut:String):
+func set_shard_library(new_library:ShardLibrary):
+	var old_library = shard_library
+	if old_library and old_library.is_connected("changed", self, 'save_shard_library'):
+		old_library.disconnect("changed", self, 'save_shard_library')	
+	new_library.connect("changed", self, 'save_shard_library')
+	shard_library = new_library
+	self.emit_signal('shard_library_set', new_library, old_library)
+
+func save_shard_library(path:String=""):
+	if shard_library:
+		if not path:
+			path = shard_library.resource_path
+		if path:
+			var error = ResourceSaver.save(path, shard_library)
+			if error:
+				push_error("Error when saving shard library.")
+	self.emit_signal('shard_library_changed')
+
+### Actions
+
+func use_shortcut(shortcut:String):
 	var re = RegEx.new()
 	re.compile("((res:\\/\\/.*\\.([a-z]+))(::[0-9]+)?)(?::([0-9]+))?")
 	var result = re.search(shortcut)
@@ -39,11 +58,28 @@ func _on_use_shortcut(shortcut:String):
 		if result.get_string(5) and (result.get_string(3) != "gd" or is_scene_object):
 			get_editor_interface().get_script_editor().call_deferred('goto_line', int(result.get_string(5))-1)
 
+func open_shard(shard_id:String):
+	self.show()
+	self.emit_signal('shard_library_open_shard', shard_id)
+
+
+### Administrative
+
+func show():
+	get_editor_interface().set_main_screen_editor(get_plugin_name())
+
+func _enter_tree():
+	base_control = get_editor_interface().get_base_control()
+	
+	shard_library_editor_instance = ShardLibraryEditor.instance()
+	get_editor_interface().get_editor_viewport().add_child(shard_library_editor_instance)
+	shard_library_editor_instance.init(self)
+	
+	make_visible(false)
 
 func _exit_tree():
 	if shard_library_editor_instance:
 		shard_library_editor_instance.queue_free()
-
 
 func has_main_screen():
 	return true
@@ -52,31 +88,17 @@ func handles(object):
 	if object is ShardLibrary:
 		return true
 	return false
-	
+
 func edit(object):
 	if object is ShardLibrary:
-		shard_library_editor_instance.open_library(object)
-
-var hidden_list:Array
+		self.shard_library = object
 
 func make_visible(visible):
 	if shard_library_editor_instance:
-		#if visible:
-			#hidden_list = []
-			#for c in get_editor_interface().get_editor_viewport().get_children():
-			#	if c.get('visible') is bool and c.visible:
-					#hidden_list.append(c)
-			#		c.visible = false
-		#else:
-			#for c in hidden_list:
-			#	c.visible = true
-			#hidden_list = []
 		shard_library_editor_instance.visible = visible
-
 
 func get_plugin_name():
 	return "Agartha"
-
 
 func get_plugin_icon():
 	return AgarthaIcon

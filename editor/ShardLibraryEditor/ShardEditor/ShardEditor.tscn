@@ -28,6 +28,7 @@ text = "#Comment
 :shard_0:
 	\"Text line without sayer.\"
 	a \"Text line with sayer.\"
+	a param1 param2 \"Text line with sayer and tags parameters.\"
 :$:   #Sequential id (will use last id and increment it)
 	\"Second shard\"
 	show stuff
