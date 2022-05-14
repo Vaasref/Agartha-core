@@ -20,30 +20,30 @@ func get_tree():
 	return get_branch("")
 
 
-func get_branch(shard_id_root):
+func get_branch(branch_id):
 	var output = []
-	var shards = get_children_ids(shard_id_root)
+	var ids = get_children_ids(branch_id)
 	var branches = {}
-	for i in shards.size():
-		if shards[i] == shard_id_root:
+	for id in ids:
+		if id == branch_id:
 			continue
-		var branch_id = shards[i].trim_prefix(shard_id_root).split("_", false)[0]
-		if shard_id_root:
-			branch_id = "%s_%s" % [shard_id_root, branch_id]
-		branches[branch_id] = true
+		var child_branch_id = id.trim_prefix(branch_id).split("_", false)[0]
+		if branch_id:
+			child_branch_id = "%s_%s" % [branch_id, child_branch_id]
+		branches[child_branch_id] = true
 	for b in branches.keys():
 		branches[b] = get_branch(b)
 	return branches
 
 
-func get_children_ids(shard_id, trimmed:bool = false):
+func get_children_ids(branch_id, trimmed:bool = false):
 	var output = []
-	for s in shards.keys():
-		if s.begins_with(shard_id):
+	for k in shards.keys():
+		if k.begins_with(branch_id):
 			if trimmed:
-				output.append(s.trim_prefix(shard_id))
+				output.append(k.trim_prefix(branch_id))
 			else:
-				output.append(s)
+				output.append(k)
 	return output
 
 

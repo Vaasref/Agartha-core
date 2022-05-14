@@ -39,26 +39,52 @@ func save_shard_library(path:String=""):
 
 func use_shortcut(shortcut:String):
 	var re = RegEx.new()
-	re.compile("((res:\\/\\/.*\\.([a-z]+))(::[0-9]+)?)(?::([0-9]+))?")
+	re.compile("((res:\\/\\/.*\\.([a-z]+))(?:::[0-9]+)?)(?::([_a-zA-Z][_a-zA-Z0-9]+))?(?::([0-9]+))?")
 	var result = re.search(shortcut)
 	if result:
-		var need_scene:bool = result.get_string(3) == "tscn" or result.get_string(3) == "scn"
-		var is_scene_object:bool = need_scene and result.get_string(4)
-		var is_scene:bool = need_scene and not is_scene_object
+		var scene_path = result.get_string(2) if result.get_string(3) == "tscn" or result.get_string(3) == "scn" else ""
+		var is_sub_resource:bool = result.get_string(3) == "tscn" and result.get_string(2) != result.get_string(1)
+		var is_scene:bool = scene_path and not is_sub_resource
+		var is_script:bool = result.get_string(3) == "gd"
 		
-		if need_scene:
-			get_editor_interface().open_scene_from_path(result.get_string(2))
-			if result.get_string(2) != get_tree().edited_scene_root.filename:
+		var resource_path = result.get_string(1) if is_sub_resource or is_script else ""
+
+		var specified_line = int(result.get_string(5))
+		var specified_function = result.get_string(4)
+		var specifies_goto:bool = (specified_line or specified_function) and resource_path
+		
+		
+		print(shortcut)
+		for i in result.get_group_count():
+			print("%d - '%s'" % [i, result.get_string(i)])
+		
+		if scene_path:
+			get_editor_interface().open_scene_from_path(scene_path)
+			if scene_path != get_tree().edited_scene_root.filename:
 				yield(self, 'scene_changed')
 		
-		if not is_scene:
-			get_editor_interface().call_deferred('inspect_object', load(result.get_string(1)))
+		if resource_path:
+			get_editor_interface().call_deferred('inspect_object', load(resource_path))
 		
-		if not is_scene_object:
-			get_editor_interface().call_deferred('select_file', result.get_string(1))
+		if not is_sub_resource:
+			get_editor_interface().call_deferred('select_file', resource_path)
 		
-		if result.get_string(5) and (result.get_string(3) != "gd" or is_scene_object):
-			get_editor_interface().get_script_editor().call_deferred('goto_line', int(result.get_string(5))-1)
+		if specifies_goto:
+			var line = specified_line
+			if specified_function:
+				line = get_function_line(resource_path, specified_function, line)
+			get_editor_interface().get_script_editor().call_deferred('goto_line', line - 1)
+
+func get_function_line(file_path:String, function_name:String, line_offset:int=0):
+	var script:Script = load(file_path)
+	var re = RegEx.new()
+	re.compile("\\n(\\s*func\\s+%s\\()" % function_name)
+	var result = re.search(script.source_code)
+	var line = line_offset
+	if result:
+		line += script.source_code.count("\n", 0, result.get_end(1)) + 1
+		print("Line %d    start at %d" % [line, result.get_start(1)])
+	return line
 
 func open_shard(shard_id:String):
 	self.show()
@@ -106,7 +132,7 @@ func make_visible(visible):
 		shard_library_editor_instance.visible = visible
 
 func get_plugin_name():
-	return "Agartha"
+	return "ShardLib"
 
 func get_plugin_icon():
 	return AgarthaIcon
