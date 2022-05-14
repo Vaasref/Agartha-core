@@ -273,6 +273,11 @@ const properties_infos:Dictionary = {
 		"hint": PROPERTY_HINT_DIR,
 		"default": "res://shard_libraries/"
 	},
+	"agartha/paths/codices_folder": {
+		"type": TYPE_STRING,
+		"hint": PROPERTY_HINT_DIR,
+		"default": "res://codices/"
+	},
 	"agartha/export/strip_shard_libraries": {
 		"type": TYPE_BOOL,
 		"hint": PROPERTY_HINT_NONE,

@@ -1,0 +1,940 @@
+[gd_scene load_steps=31 format=2]
+
+[ext_resource path="res://addons/Agartha/fonts/NotoSans/NotoSans-BoldItalic.ttf" type="DynamicFontData" id=1]
+[ext_resource path="res://addons/Agartha/fonts/NotoSans/NotoSans-Regular.ttf" type="DynamicFontData" id=2]
+[ext_resource path="res://addons/Agartha/fonts/NotoSans/NotoSans-Bold.ttf" type="DynamicFontData" id=3]
+[ext_resource path="res://addons/Agartha/fonts/NotoSans/NotoSans-Italic.ttf" type="DynamicFontData" id=4]
+[ext_resource path="res://addons/Agartha/fonts/Hack/Hack-Regular.ttf" type="DynamicFontData" id=5]
+
+[sub_resource type="GDScript" id=1]
+script/source = "tool
+extends MarginContainer
+
+signal init(plugin)
+signal save_codex_entry(entry)
+signal pending_changes(state)
+
+var plugin:EditorPlugin
+
+func init(_plugin:EditorPlugin):
+	self.plugin = _plugin
+	self.emit_signal(\"init\", _plugin)
+	self.plugin.connect(\"codex_open_entry\", self, \"_on_open_codex_entry\")
+
+func _on_open_codex_entry(_entry:CodexEntry):
+	reset_pending_changes()
+
+func _on_save_pressed():
+	var entry = CodexEntry.new()
+	self.emit_signal(\"save_codex_entry\", entry)
+	if plugin.codex:
+		plugin.codex.save_entry(entry)
+		reset_pending_changes()
+
+var pending_changes:Dictionary = {}
+
+func reset_pending_changes():
+	pending_changes = {}
+	self.emit_signal(\"pending_changes\", false)
+
+func _on_declare_pending_change(id, state):
+	if state:
+		pending_changes[id] = null
+	elif id in pending_changes:
+		pending_changes.erase(id)
+	self.emit_signal(\"pending_changes\", not pending_changes.empty())
+
+"
+
+[sub_resource type="GDScript" id=14]
+script/source = "tool
+extends ItemList
+
+var plugin:EditorPlugin
+
+func init(_plugin):
+	plugin = _plugin
+	call_deferred(\"_update_icons\")
+
+func _update_icons():
+	var list = Array(plugin.base_control.theme.get_icon_list('EditorIcons'))
+	list.sort()
+
+	for icon_name in list:
+		add_item(icon_name, plugin.base_control.get_icon(icon_name, 'EditorIcons'))
+"
+
+[sub_resource type="GDScript" id=9]
+script/source = "tool
+extends LineEdit
+
+var codex_filename:String
+
+func init(plugin):
+	plugin.connect(\"codex_set\", self, '_on_codex_set')
+
+func _on_codex_set(_new_codex, _old_codex):
+	if _new_codex:
+		if not _new_codex.resource_path:
+			codex_filename = \"Unsaved codex\"
+		else:
+			codex_filename = _new_codex.resource_path.get_file()
+	self.text = codex_filename
+
+
+func _on_pending_changes(state):
+	if state:
+		if codex_filename:
+			self.text = codex_filename + \" (*)\"
+		else:
+			self.text = \"Unsaved codex\"
+	else:
+		self.text = codex_filename
+"
+
+[sub_resource type="GDScript" id=6]
+script/source = "tool
+extends Tree
+
+var plugin:EditorPlugin
+
+var bundles:Array
+
+var script_icon:Texture
+
+func init(_plugin):
+	self.plugin = _plugin
+	script_icon = self.plugin.base_control.get_icon(\"Script\", \"EditorIcons\")
+	self.plugin.connect(\"codex_set\", self, '_on_codex_set')
+	self.plugin.connect(\"codex_changed\", self, '_on_codex_changed')
+
+func _on_codex_set(_new_codex, _old_codex):
+	update_tree()
+
+func _on_codex_changed():
+	update_tree()
+
+
+# Update tree logic
+
+func update_tree():
+	var tree = plugin.codex.get_tree()
+	
+	self.clear()
+	var root = self.create_item()
+	self.set_column_expand(0, true)
+	self.set_hide_root(true)
+	
+	for b in tree.keys():
+		place_item_in_tree(root, tree[b], b)
+
+func place_item_in_tree(parent, branch, id):
+	var tree_item = self.create_item(parent)
+	var id_split = id.split(\"_\")
+	tree_item.set_text(0, id_split[id_split.size()-1])
+	tree_item.set_meta(\"entry_id\", id)
+	if id in plugin.codex.entries:
+		tree_item.set_icon(0, script_icon)
+	else:
+		tree_item.set_custom_color(0, Color.silver)
+	for b in branch.keys():
+		place_item_in_tree(tree_item, branch[b], b)
+
+
+func _on_item_activated():
+	plugin.emit_signal(\"codex_open_entry\", self.get_selected().get_meta(\"entry_id\"))
+"
+
+[sub_resource type="GDScript" id=7]
+script/source = "tool
+extends LineEdit
+
+
+func init(plugin):
+	self.right_icon = plugin.base_control.get_icon(\"Search\", \"EditorIcons\")
+	plugin.connect(\"codex_set\", self, '_on_codex_set')
+	plugin.connect(\"codex_changed\", self, '_on_codex_changed')
+
+func _on_codex_set(_new_codex, _old_codex):
+	text = \"\"
+
+func _on_codex_changed():
+	text = \"\"
+"
+
+[sub_resource type="GDScript" id=8]
+script/source = "tool
+extends ItemList
+
+var plugin:EditorPlugin
+
+func init(_plugin):
+	self.plugin = _plugin
+	self.plugin.connect(\"codex_set\", self, '_on_codex_set')
+	self.plugin.connect(\"codex_changed\", self, '_on_codex_changed')
+
+func _on_codex_set(_new_codex, _old_codex):
+	if plugin and plugin.codex:
+		keyword_dict = plugin.codex.get_keyword_dictionary()
+	update_list()
+
+func _on_codex_changed():
+	if plugin and plugin.codex:
+		keyword_dict = plugin.codex.get_keyword_dictionary()
+	update_list()
+	
+var keyword_dict:Dictionary = {}
+
+func update_list(filter:String=\"\"):
+	clear()
+	if plugin and plugin.codex:
+		for k in keyword_dict.keys():
+			var matched = k.begins_with(filter)
+			if not matched:
+				for p in k.split(\" \"):
+					if p.begins_with(filter):
+						matched = true
+						break
+			if matched:
+				add_keyword(k, keyword_dict[k])
+		sort_items_by_text()
+
+func add_keyword(keyword_string:String, entry_id:String):
+	var item_id = get_item_count()
+	self.add_item(keyword_string)
+	self.set_item_tooltip(item_id, entry_id)
+	self.set_item_tooltip_enabled(item_id, true)
+	self.set_item_metadata(item_id, entry_id)
+
+func _on_filter_changed(filter):
+	update_list(filter)
+
+
+func _on_item_activated(index):
+	plugin.emit_signal(\"codex_open_entry\", get_item_metadata(index))
+"
+
+[sub_resource type="GDScript" id=18]
+script/source = "tool
+extends TabContainer
+
+var plugin:EditorPlugin
+
+func init(_plugin):
+	self.plugin = _plugin
+	self.plugin.connect(\"codex_open_entry\", self, \"_on_open_codex_entry\")
+
+func _on_open_codex_entry(_entry_id):
+	self.current_tab = 0
+"
+
+[sub_resource type="GDScript" id=3]
+script/source = "tool
+extends LineEdit
+
+signal declare_pending_change(id, state)
+
+var plugin:EditorPlugin
+var entry_id:String
+
+
+func init(_plugin):
+	self.plugin = _plugin
+	self.plugin.connect(\"codex_open_entry\", self, \"_on_open_codex_entry\")
+
+
+func _on_save_codex_entry(entry:CodexEntry):
+	entry_id = self.text
+	entry.id = entry_id
+
+
+func _on_open_codex_entry(_entry_id):
+	entry_id = _entry_id
+	self.text = entry_id
+	emit_signal(\"text_changed\", entry_id)
+
+
+func _on_text_changed(_new_text):
+	self.emit_signal(\"declare_pending_change\", \"id\", (self.text != entry_id))
+"
+
+[sub_resource type="GDScript" id=15]
+script/source = "tool
+extends LineEdit
+
+signal declare_pending_change(id, state)
+
+var plugin:EditorPlugin
+var substitution:String
+
+
+func init(_plugin):
+	self.plugin = _plugin
+	self.plugin.connect(\"codex_open_entry\", self, \"_on_open_codex_entry\")
+
+
+func _on_save_codex_entry(entry:CodexEntry):
+	substitution = self.text
+	entry.substitution_format = substitution
+
+
+func _on_open_codex_entry(entry_id):
+	substitution = self.plugin.codex.entries[entry_id].substitution_format
+	self.text = substitution
+
+
+func _on_text_changed(_new_text):
+	self.emit_signal(\"declare_pending_change\", \"substitution\", (self.text != substitution))
+"
+
+[sub_resource type="GDScript" id=4]
+script/source = "tool
+extends TextEdit
+
+signal declare_pending_change(id, state)
+
+var plugin:EditorPlugin
+var keywords_string:String
+
+
+func init(_plugin):
+	self.plugin = _plugin
+	self.plugin.connect(\"codex_open_entry\", self, \"_on_open_codex_entry\")
+
+
+func _on_save_codex_entry(entry:CodexEntry):
+	entry.set_keywords(self.text)
+	keywords_string = entry.compose_keywords_string()
+	self.text = keywords_string
+
+
+func _on_open_codex_entry(entry_id):
+	keywords_string = self.plugin.codex.entries[entry_id].compose_keywords_string()
+	self.text = keywords_string
+
+
+func _on_text_changed():
+	self.emit_signal(\"declare_pending_change\", \"keywords\", (keywords_string != self.text))
+"
+
+[sub_resource type="GDScript" id=2]
+script/source = "tool
+extends TextEdit
+
+signal declare_pending_change(id, state)
+
+var plugin:EditorPlugin
+var digest:String
+
+
+func init(_plugin):
+	self.plugin = _plugin
+	self.plugin.connect(\"codex_open_entry\", self, \"_on_open_codex_entry\")
+
+
+func _on_save_codex_entry(entry:CodexEntry):
+	digest = self.text
+	entry.digest = digest
+
+
+func _on_open_codex_entry(entry_id):
+	digest = self.plugin.codex.entries[entry_id].digest
+	self.text = digest
+
+
+func _on_text_changed():
+	self.emit_signal(\"declare_pending_change\", \"digest\", (self.text != digest))
+"
+
+[sub_resource type="InputEventKey" id=11]
+control = true
+command = true
+pressed = true
+scancode = 83
+
+[sub_resource type="ShortCut" id=12]
+shortcut = SubResource( 11 )
+
+[sub_resource type="GDScript" id=10]
+script/source = "tool
+extends Button
+
+var entry_id:String = \"\"
+
+func _on_pending_changes(state):
+	if entry_id:
+		self.disabled = not state
+
+func _on_id_changed(new_id):
+	entry_id = new_id
+	self.disabled = not entry_id
+"
+
+[sub_resource type="GDScript" id=13]
+script/source = "tool
+extends Button
+
+export var bbcode:String = \"\"
+var textedit:TextEdit
+
+
+func _pressed():
+	if textedit:
+		var sel = textedit.get_selection_text()
+		if sel:
+			var s_f_l = textedit.get_selection_from_line()
+			var s_f_c = textedit.get_selection_from_column()
+			var s_t_l = textedit.get_selection_to_line()
+			var s_t_c = textedit.get_selection_to_column()
+			var before_sel = \"\"
+			for l in s_f_l:
+				before_sel += textedit.get_line(l)
+			before_sel += textedit.get_line(s_f_l).substr(0, s_f_c)
+			var after_sel = textedit.get_line(s_t_l).substr(s_t_c)
+			for l in range(s_t_l + 1, textedit.get_line_count()):
+				after_sel += \"\\n\" + textedit.get_line(l)
+			s_f_c += 2 + bbcode.length()
+			if s_f_l == s_t_l:
+				s_t_c += 2 + bbcode.length()
+			textedit.text = \"%s[%s]%s[/%s]%s\" % [before_sel, bbcode, sel, bbcode, after_sel]
+			textedit.select(s_f_l, s_f_c, s_t_l, s_t_c)
+		else:
+			textedit.insert_text_at_cursor(\"[%s][/%s]\" % [bbcode, bbcode])
+
+
+func _on_textedit_focus():
+	var focused:Control = self.get_focus_owner()
+	if focused.name == \"DigestInput\" or focused.name == \"DescInput\":
+		textedit = self.get_focus_owner()
+"
+
+[sub_resource type="GDScript" id=5]
+script/source = "tool
+extends TextEdit
+
+signal declare_pending_change(id, state)
+
+var plugin:EditorPlugin
+var description:String
+
+
+func init(_plugin):
+	self.plugin = _plugin
+	self.plugin.connect(\"codex_open_entry\", self, \"_on_open_codex_entry\")
+
+
+func _on_save_codex_entry(entry:CodexEntry):
+	description = self.text
+	entry.description = self.text
+
+
+func _on_open_codex_entry(entry_id):
+	description = self.plugin.codex.entries[entry_id].description
+	self.text = description
+
+
+func _on_text_changed():
+	self.emit_signal(\"declare_pending_change\", \"description\", (self.text != description))
+"
+
+[sub_resource type="DynamicFont" id=21]
+font_data = ExtResource( 5 )
+
+[sub_resource type="DynamicFont" id=22]
+font_data = ExtResource( 1 )
+
+[sub_resource type="DynamicFont" id=23]
+font_data = ExtResource( 4 )
+
+[sub_resource type="DynamicFont" id=24]
+font_data = ExtResource( 3 )
+
+[sub_resource type="DynamicFont" id=25]
+font_data = ExtResource( 2 )
+
+[sub_resource type="GDScript" id=16]
+script/source = "tool
+extends RichTextLabel
+
+var plugin:EditorPlugin
+var processed_text = \"\"
+
+func init(_plugin):
+	plugin = _plugin
+
+signal parse_time(time)
+
+func _on_text_update(text):
+	if plugin.codex:
+		var time = OS.get_ticks_usec()
+		processed_text = plugin.codex.apply_to(text)
+		time = OS.get_ticks_usec() - time
+		emit_signal(\"parse_time\", time)
+		_update_text()
+
+func _update_text():
+	if self.bbcode_enabled:
+		self.bbcode_text = processed_text
+	else:
+		self.text = processed_text
+
+func set_raw_bbcode(enabled:bool):
+	self.bbcode_enabled = not enabled
+	_update_text()
+
+
+var test_loops:int = 1
+
+func set_performances_test_loops(loops:int):
+	self.test_loops = loops
+
+func test_parsing_performances():
+	var time = OS.get_ticks_usec()
+	for i in test_loops:
+		processed_text = plugin.codex.apply_to(text)
+	time = OS.get_ticks_usec() - time
+	emit_signal(\"parse_time\", 1.0 * time / test_loops)
+"
+
+[sub_resource type="GDScript" id=20]
+script/source = "tool
+extends Button
+
+
+func _on_text_update(text):
+	self.disabled = true
+	$DisabledTimer.start()
+
+func enable():
+	self.disabled = false
+"
+
+[sub_resource type="GDScript" id=19]
+script/source = "tool
+extends Label
+
+
+func _on_parse_time(time):
+	self.text = \"Text parsed in %6.3fms\" % (time / 1000.0)
+"
+
+[sub_resource type="GDScript" id=17]
+script/source = "tool
+extends TextEdit
+
+signal text_update(text)
+
+var plugin:EditorPlugin
+var processed_text = \"\"
+
+func init(_plugin):
+	plugin = _plugin
+	self.plugin.connect(\"codex_set\", self, '_on_codex_set')
+	self.plugin.connect(\"codex_changed\", self, '_on_codex_changed')
+
+func _on_codex_set(_new_codex, _old_codex):
+	_update_text()
+
+func _on_codex_changed():
+	_update_text()
+
+func _on_text_changed():
+	$UpdateTimer.start()
+
+func _update_text():
+	emit_signal(\"text_update\", self.text)
+
+func _on_save_codex_entry(_entry):
+	_update_text()
+"
+
+[node name="CodexEditor" type="MarginContainer"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+custom_constants/margin_right = 4
+custom_constants/margin_top = 4
+custom_constants/margin_left = 4
+custom_constants/margin_bottom = 4
+script = SubResource( 1 )
+
+[node name="HSplitContainer" type="HSplitContainer" parent="."]
+margin_left = 4.0
+margin_top = 4.0
+margin_right = 1276.0
+margin_bottom = 716.0
+split_offset = 120
+
+[node name="ItemList" type="ItemList" parent="HSplitContainer"]
+visible = false
+margin_right = 120.0
+margin_bottom = 712.0
+script = SubResource( 14 )
+
+[node name="SideBar" type="VSplitContainer" parent="HSplitContainer"]
+margin_right = 178.0
+margin_bottom = 712.0
+size_flags_vertical = 3
+
+[node name="CodexView" type="VBoxContainer" parent="HSplitContainer/SideBar"]
+margin_right = 178.0
+margin_bottom = 350.0
+size_flags_vertical = 3
+
+[node name="CodexNameDisplay" type="LineEdit" parent="HSplitContainer/SideBar/CodexView"]
+margin_right = 178.0
+margin_bottom = 24.0
+editable = false
+placeholder_text = "No codex opened"
+script = SubResource( 9 )
+
+[node name="EntryTree" type="Tree" parent="HSplitContainer/SideBar/CodexView"]
+margin_top = 28.0
+margin_right = 178.0
+margin_bottom = 350.0
+size_flags_vertical = 3
+script = SubResource( 6 )
+
+[node name="Keywords" type="VBoxContainer" parent="HSplitContainer/SideBar"]
+margin_top = 362.0
+margin_right = 178.0
+margin_bottom = 712.0
+size_flags_vertical = 3
+
+[node name="Filter" type="LineEdit" parent="HSplitContainer/SideBar/Keywords"]
+margin_right = 178.0
+margin_bottom = 24.0
+placeholder_text = "Filter keywords"
+script = SubResource( 7 )
+
+[node name="KeywordList" type="ItemList" parent="HSplitContainer/SideBar/Keywords"]
+margin_top = 28.0
+margin_right = 178.0
+margin_bottom = 350.0
+size_flags_vertical = 3
+script = SubResource( 8 )
+
+[node name="TabContainer" type="TabContainer" parent="HSplitContainer"]
+margin_left = 190.0
+margin_right = 1272.0
+margin_bottom = 712.0
+tab_align = 0
+script = SubResource( 18 )
+
+[node name="Entry Editor" type="VSplitContainer" parent="HSplitContainer/TabContainer"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 4.0
+margin_top = 32.0
+margin_right = -4.0
+margin_bottom = -4.0
+split_offset = 50
+
+[node name="TopBar" type="HSplitContainer" parent="HSplitContainer/TabContainer/Entry Editor"]
+margin_right = 1074.0
+margin_bottom = 120.0
+
+[node name="EntryIdentity" type="GridContainer" parent="HSplitContainer/TabContainer/Entry Editor/TopBar"]
+margin_right = 402.0
+margin_bottom = 120.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+columns = 2
+
+[node name="Label" type="Label" parent="HSplitContainer/TabContainer/Entry Editor/TopBar/EntryIdentity"]
+margin_top = 5.0
+margin_right = 77.0
+margin_bottom = 19.0
+text = "ID"
+
+[node name="ID" type="LineEdit" parent="HSplitContainer/TabContainer/Entry Editor/TopBar/EntryIdentity"]
+margin_left = 81.0
+margin_right = 402.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+script = SubResource( 3 )
+
+[node name="Label2" type="Label" parent="HSplitContainer/TabContainer/Entry Editor/TopBar/EntryIdentity"]
+margin_top = 33.0
+margin_right = 77.0
+margin_bottom = 47.0
+text = "Substitution"
+
+[node name="Substitution" type="LineEdit" parent="HSplitContainer/TabContainer/Entry Editor/TopBar/EntryIdentity"]
+margin_left = 81.0
+margin_top = 28.0
+margin_right = 402.0
+margin_bottom = 52.0
+size_flags_horizontal = 3
+script = SubResource( 15 )
+
+[node name="Label3" type="Label" parent="HSplitContainer/TabContainer/Entry Editor/TopBar/EntryIdentity"]
+margin_top = 81.0
+margin_right = 77.0
+margin_bottom = 95.0
+text = "Keywords"
+
+[node name="Keywords" type="TextEdit" parent="HSplitContainer/TabContainer/Entry Editor/TopBar/EntryIdentity"]
+margin_left = 81.0
+margin_top = 56.0
+margin_right = 402.0
+margin_bottom = 120.0
+size_flags_vertical = 3
+wrap_enabled = true
+script = SubResource( 4 )
+
+[node name="DigestBox" type="VBoxContainer" parent="HSplitContainer/TabContainer/Entry Editor/TopBar"]
+margin_left = 414.0
+margin_right = 1074.0
+margin_bottom = 120.0
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.63
+
+[node name="Label" type="Label" parent="HSplitContainer/TabContainer/Entry Editor/TopBar/DigestBox"]
+margin_right = 660.0
+margin_bottom = 14.0
+text = "Digest"
+
+[node name="Digest" type="TextEdit" parent="HSplitContainer/TabContainer/Entry Editor/TopBar/DigestBox"]
+margin_top = 18.0
+margin_right = 660.0
+margin_bottom = 120.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+wrap_enabled = true
+script = SubResource( 2 )
+
+[node name="DescriptionEditor" type="VBoxContainer" parent="HSplitContainer/TabContainer/Entry Editor"]
+margin_top = 132.0
+margin_right = 1074.0
+margin_bottom = 676.0
+
+[node name="ButtonBar" type="HBoxContainer" parent="HSplitContainer/TabContainer/Entry Editor/DescriptionEditor"]
+margin_right = 1074.0
+margin_bottom = 20.0
+
+[node name="Save" type="Button" parent="HSplitContainer/TabContainer/Entry Editor/DescriptionEditor/ButtonBar"]
+margin_right = 41.0
+margin_bottom = 20.0
+disabled = true
+shortcut = SubResource( 12 )
+text = "Save"
+script = SubResource( 10 )
+
+[node name="BBCodeButtons" type="HBoxContainer" parent="HSplitContainer/TabContainer/Entry Editor/DescriptionEditor/ButtonBar"]
+margin_left = 45.0
+margin_right = 1074.0
+margin_bottom = 20.0
+size_flags_horizontal = 3
+alignment = 1
+
+[node name="Bold" type="Button" parent="HSplitContainer/TabContainer/Entry Editor/DescriptionEditor/ButtonBar/BBCodeButtons"]
+margin_left = 416.0
+margin_right = 457.0
+margin_bottom = 20.0
+text = "Bold"
+script = SubResource( 13 )
+bbcode = "b"
+
+[node name="Italic" type="Button" parent="HSplitContainer/TabContainer/Entry Editor/DescriptionEditor/ButtonBar/BBCodeButtons"]
+margin_left = 461.0
+margin_right = 505.0
+margin_bottom = 20.0
+text = "Italic"
+script = SubResource( 13 )
+bbcode = "i"
+
+[node name="Underline" type="Button" parent="HSplitContainer/TabContainer/Entry Editor/DescriptionEditor/ButtonBar/BBCodeButtons"]
+margin_left = 509.0
+margin_right = 560.0
+margin_bottom = 20.0
+text = "Under"
+script = SubResource( 13 )
+bbcode = "u"
+
+[node name="Strikethrough" type="Button" parent="HSplitContainer/TabContainer/Entry Editor/DescriptionEditor/ButtonBar/BBCodeButtons"]
+margin_left = 564.0
+margin_right = 612.0
+margin_bottom = 20.0
+text = "Strike"
+script = SubResource( 13 )
+bbcode = "s"
+
+[node name="Description" type="TextEdit" parent="HSplitContainer/TabContainer/Entry Editor/DescriptionEditor"]
+margin_top = 24.0
+margin_right = 1074.0
+margin_bottom = 544.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+show_line_numbers = true
+minimap_draw = true
+script = SubResource( 5 )
+
+[node name="Codex Test" type="MarginContainer" parent="HSplitContainer/TabContainer"]
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 4.0
+margin_top = 32.0
+margin_right = -4.0
+margin_bottom = -4.0
+
+[node name="VSplitContainer" type="VSplitContainer" parent="HSplitContainer/TabContainer/Codex Test"]
+margin_right = 1074.0
+margin_bottom = 676.0
+
+[node name="Preview" type="VBoxContainer" parent="HSplitContainer/TabContainer/Codex Test/VSplitContainer"]
+margin_right = 1074.0
+margin_bottom = 332.0
+size_flags_vertical = 3
+
+[node name="TopBar" type="HBoxContainer" parent="HSplitContainer/TabContainer/Codex Test/VSplitContainer/Preview"]
+margin_right = 1074.0
+margin_bottom = 40.0
+
+[node name="Label" type="Label" parent="HSplitContainer/TabContainer/Codex Test/VSplitContainer/Preview/TopBar"]
+margin_top = 13.0
+margin_right = 911.0
+margin_bottom = 27.0
+size_flags_horizontal = 3
+text = "Preview"
+
+[node name="RawBBCode" type="CheckButton" parent="HSplitContainer/TabContainer/Codex Test/VSplitContainer/Preview/TopBar"]
+margin_left = 915.0
+margin_right = 1074.0
+margin_bottom = 40.0
+text = "Raw BBCode"
+
+[node name="TestTextOutput" type="RichTextLabel" parent="HSplitContainer/TabContainer/Codex Test/VSplitContainer/Preview"]
+margin_top = 44.0
+margin_right = 1074.0
+margin_bottom = 304.0
+size_flags_vertical = 3
+custom_fonts/mono_font = SubResource( 21 )
+custom_fonts/bold_italics_font = SubResource( 22 )
+custom_fonts/italics_font = SubResource( 23 )
+custom_fonts/bold_font = SubResource( 24 )
+custom_fonts/normal_font = SubResource( 25 )
+bbcode_enabled = true
+script = SubResource( 16 )
+
+[node name="BottomBar" type="HBoxContainer" parent="HSplitContainer/TabContainer/Codex Test/VSplitContainer/Preview"]
+margin_top = 308.0
+margin_right = 1074.0
+margin_bottom = 332.0
+
+[node name="Parse" type="Button" parent="HSplitContainer/TabContainer/Codex Test/VSplitContainer/Preview/BottomBar"]
+margin_right = 47.0
+margin_bottom = 24.0
+disabled = true
+text = "Parse"
+script = SubResource( 20 )
+
+[node name="DisabledTimer" type="Timer" parent="HSplitContainer/TabContainer/Codex Test/VSplitContainer/Preview/BottomBar/Parse"]
+wait_time = 0.2
+one_shot = true
+
+[node name="Perfomances" type="HBoxContainer" parent="HSplitContainer/TabContainer/Codex Test/VSplitContainer/Preview/BottomBar"]
+margin_left = 51.0
+margin_right = 1074.0
+margin_bottom = 24.0
+size_flags_horizontal = 3
+alignment = 2
+
+[node name="TestParsing" type="Button" parent="HSplitContainer/TabContainer/Codex Test/VSplitContainer/Preview/BottomBar/Perfomances"]
+margin_left = 698.0
+margin_right = 737.0
+margin_bottom = 24.0
+text = "Test"
+
+[node name="Label" type="Label" parent="HSplitContainer/TabContainer/Codex Test/VSplitContainer/Preview/BottomBar/Perfomances"]
+margin_left = 741.0
+margin_top = 5.0
+margin_right = 783.0
+margin_bottom = 19.0
+text = "Loops:"
+
+[node name="SpinBox" type="SpinBox" parent="HSplitContainer/TabContainer/Codex Test/VSplitContainer/Preview/BottomBar/Perfomances"]
+margin_left = 787.0
+margin_right = 861.0
+margin_bottom = 24.0
+min_value = 1.0
+max_value = 1000.0
+value = 10.0
+
+[node name="ParseTime" type="Label" parent="HSplitContainer/TabContainer/Codex Test/VSplitContainer/Preview/BottomBar/Perfomances"]
+margin_left = 865.0
+margin_top = 5.0
+margin_right = 1023.0
+margin_bottom = 19.0
+text = "Text parsed in 00.000ms"
+align = 2
+script = SubResource( 19 )
+
+[node name="TestTextInput" type="TextEdit" parent="HSplitContainer/TabContainer/Codex Test/VSplitContainer"]
+margin_top = 344.0
+margin_right = 1074.0
+margin_bottom = 676.0
+size_flags_vertical = 3
+wrap_enabled = true
+script = SubResource( 17 )
+
+[node name="UpdateTimer" type="Timer" parent="HSplitContainer/TabContainer/Codex Test/VSplitContainer/TestTextInput"]
+wait_time = 0.5
+one_shot = true
+
+[connection signal="init" from="." to="HSplitContainer/ItemList" method="init"]
+[connection signal="init" from="." to="HSplitContainer/SideBar/CodexView/CodexNameDisplay" method="init"]
+[connection signal="init" from="." to="HSplitContainer/SideBar/CodexView/EntryTree" method="init"]
+[connection signal="init" from="." to="HSplitContainer/SideBar/Keywords/Filter" method="init"]
+[connection signal="init" from="." to="HSplitContainer/SideBar/Keywords/KeywordList" method="init"]
+[connection signal="init" from="." to="HSplitContainer/TabContainer" method="init"]
+[connection signal="init" from="." to="HSplitContainer/TabContainer/Entry Editor/TopBar/EntryIdentity/ID" method="init"]
+[connection signal="init" from="." to="HSplitContainer/TabContainer/Entry Editor/TopBar/EntryIdentity/Substitution" method="init"]
+[connection signal="init" from="." to="HSplitContainer/TabContainer/Entry Editor/TopBar/EntryIdentity/Keywords" method="init"]
+[connection signal="init" from="." to="HSplitContainer/TabContainer/Entry Editor/TopBar/DigestBox/Digest" method="init"]
+[connection signal="init" from="." to="HSplitContainer/TabContainer/Entry Editor/DescriptionEditor/Description" method="init"]
+[connection signal="init" from="." to="HSplitContainer/TabContainer/Codex Test/VSplitContainer/Preview/TestTextOutput" method="init"]
+[connection signal="init" from="." to="HSplitContainer/TabContainer/Codex Test/VSplitContainer/TestTextInput" method="init"]
+[connection signal="pending_changes" from="." to="HSplitContainer/SideBar/CodexView/CodexNameDisplay" method="_on_pending_changes"]
+[connection signal="pending_changes" from="." to="HSplitContainer/TabContainer/Entry Editor/DescriptionEditor/ButtonBar/Save" method="_on_pending_changes"]
+[connection signal="save_codex_entry" from="." to="HSplitContainer/TabContainer/Entry Editor/TopBar/EntryIdentity/ID" method="_on_save_codex_entry"]
+[connection signal="save_codex_entry" from="." to="HSplitContainer/TabContainer/Entry Editor/TopBar/EntryIdentity/Substitution" method="_on_save_codex_entry"]
+[connection signal="save_codex_entry" from="." to="HSplitContainer/TabContainer/Entry Editor/TopBar/EntryIdentity/Keywords" method="_on_save_codex_entry"]
+[connection signal="save_codex_entry" from="." to="HSplitContainer/TabContainer/Entry Editor/TopBar/DigestBox/Digest" method="_on_save_codex_entry"]
+[connection signal="save_codex_entry" from="." to="HSplitContainer/TabContainer/Entry Editor/DescriptionEditor/Description" method="_on_save_codex_entry"]
+[connection signal="save_codex_entry" from="." to="HSplitContainer/TabContainer/Codex Test/VSplitContainer/TestTextInput" method="_on_save_codex_entry"]
+[connection signal="item_activated" from="HSplitContainer/SideBar/CodexView/EntryTree" to="HSplitContainer/SideBar/CodexView/EntryTree" method="_on_item_activated"]
+[connection signal="text_changed" from="HSplitContainer/SideBar/Keywords/Filter" to="HSplitContainer/SideBar/Keywords/KeywordList" method="_on_filter_changed"]
+[connection signal="item_activated" from="HSplitContainer/SideBar/Keywords/KeywordList" to="HSplitContainer/SideBar/Keywords/KeywordList" method="_on_item_activated"]
+[connection signal="declare_pending_change" from="HSplitContainer/TabContainer/Entry Editor/TopBar/EntryIdentity/ID" to="." method="_on_declare_pending_change"]
+[connection signal="text_changed" from="HSplitContainer/TabContainer/Entry Editor/TopBar/EntryIdentity/ID" to="HSplitContainer/TabContainer/Entry Editor/TopBar/EntryIdentity/ID" method="_on_text_changed"]
+[connection signal="text_changed" from="HSplitContainer/TabContainer/Entry Editor/TopBar/EntryIdentity/ID" to="HSplitContainer/TabContainer/Entry Editor/DescriptionEditor/ButtonBar/Save" method="_on_id_changed"]
+[connection signal="declare_pending_change" from="HSplitContainer/TabContainer/Entry Editor/TopBar/EntryIdentity/Substitution" to="." method="_on_declare_pending_change"]
+[connection signal="text_changed" from="HSplitContainer/TabContainer/Entry Editor/TopBar/EntryIdentity/Substitution" to="HSplitContainer/TabContainer/Entry Editor/TopBar/EntryIdentity/Substitution" method="_on_text_changed"]
+[connection signal="declare_pending_change" from="HSplitContainer/TabContainer/Entry Editor/TopBar/EntryIdentity/Keywords" to="." method="_on_declare_pending_change"]
+[connection signal="text_changed" from="HSplitContainer/TabContainer/Entry Editor/TopBar/EntryIdentity/Keywords" to="HSplitContainer/TabContainer/Entry Editor/TopBar/EntryIdentity/Keywords" method="_on_text_changed"]
+[connection signal="declare_pending_change" from="HSplitContainer/TabContainer/Entry Editor/TopBar/DigestBox/Digest" to="." method="_on_declare_pending_change"]
+[connection signal="focus_entered" from="HSplitContainer/TabContainer/Entry Editor/TopBar/DigestBox/Digest" to="HSplitContainer/TabContainer/Entry Editor/DescriptionEditor/ButtonBar/BBCodeButtons/Bold" method="_on_textedit_focus"]
+[connection signal="focus_entered" from="HSplitContainer/TabContainer/Entry Editor/TopBar/DigestBox/Digest" to="HSplitContainer/TabContainer/Entry Editor/DescriptionEditor/ButtonBar/BBCodeButtons/Italic" method="_on_textedit_focus"]
+[connection signal="focus_entered" from="HSplitContainer/TabContainer/Entry Editor/TopBar/DigestBox/Digest" to="HSplitContainer/TabContainer/Entry Editor/DescriptionEditor/ButtonBar/BBCodeButtons/Underline" method="_on_textedit_focus"]
+[connection signal="focus_entered" from="HSplitContainer/TabContainer/Entry Editor/TopBar/DigestBox/Digest" to="HSplitContainer/TabContainer/Entry Editor/DescriptionEditor/ButtonBar/BBCodeButtons/Strikethrough" method="_on_textedit_focus"]
+[connection signal="text_changed" from="HSplitContainer/TabContainer/Entry Editor/TopBar/DigestBox/Digest" to="HSplitContainer/TabContainer/Entry Editor/TopBar/DigestBox/Digest" method="_on_text_changed"]
+[connection signal="pressed" from="HSplitContainer/TabContainer/Entry Editor/DescriptionEditor/ButtonBar/Save" to="." method="_on_save_pressed"]
+[connection signal="declare_pending_change" from="HSplitContainer/TabContainer/Entry Editor/DescriptionEditor/Description" to="." method="_on_declare_pending_change"]
+[connection signal="focus_entered" from="HSplitContainer/TabContainer/Entry Editor/DescriptionEditor/Description" to="HSplitContainer/TabContainer/Entry Editor/DescriptionEditor/ButtonBar/BBCodeButtons/Bold" method="_on_textedit_focus"]
+[connection signal="focus_entered" from="HSplitContainer/TabContainer/Entry Editor/DescriptionEditor/Description" to="HSplitContainer/TabContainer/Entry Editor/DescriptionEditor/ButtonBar/BBCodeButtons/Italic" method="_on_textedit_focus"]
+[connection signal="focus_entered" from="HSplitContainer/TabContainer/Entry Editor/DescriptionEditor/Description" to="HSplitContainer/TabContainer/Entry Editor/DescriptionEditor/ButtonBar/BBCodeButtons/Underline" method="_on_textedit_focus"]
+[connection signal="focus_entered" from="HSplitContainer/TabContainer/Entry Editor/DescriptionEditor/Description" to="HSplitContainer/TabContainer/Entry Editor/DescriptionEditor/ButtonBar/BBCodeButtons/Strikethrough" method="_on_textedit_focus"]
+[connection signal="text_changed" from="HSplitContainer/TabContainer/Entry Editor/DescriptionEditor/Description" to="HSplitContainer/TabContainer/Entry Editor/DescriptionEditor/Description" method="_on_text_changed"]
+[connection signal="toggled" from="HSplitContainer/TabContainer/Codex Test/VSplitContainer/Preview/TopBar/RawBBCode" to="HSplitContainer/TabContainer/Codex Test/VSplitContainer/Preview/TestTextOutput" method="set_raw_bbcode"]
+[connection signal="parse_time" from="HSplitContainer/TabContainer/Codex Test/VSplitContainer/Preview/TestTextOutput" to="HSplitContainer/TabContainer/Codex Test/VSplitContainer/Preview/BottomBar/Perfomances/ParseTime" method="_on_parse_time"]
+[connection signal="pressed" from="HSplitContainer/TabContainer/Codex Test/VSplitContainer/Preview/BottomBar/Parse" to="HSplitContainer/TabContainer/Codex Test/VSplitContainer/TestTextInput" method="_update_text"]
+[connection signal="timeout" from="HSplitContainer/TabContainer/Codex Test/VSplitContainer/Preview/BottomBar/Parse/DisabledTimer" to="HSplitContainer/TabContainer/Codex Test/VSplitContainer/Preview/BottomBar/Parse" method="enable"]
+[connection signal="pressed" from="HSplitContainer/TabContainer/Codex Test/VSplitContainer/Preview/BottomBar/Perfomances/TestParsing" to="HSplitContainer/TabContainer/Codex Test/VSplitContainer/Preview/TestTextOutput" method="test_parsing_performances"]
+[connection signal="value_changed" from="HSplitContainer/TabContainer/Codex Test/VSplitContainer/Preview/BottomBar/Perfomances/SpinBox" to="HSplitContainer/TabContainer/Codex Test/VSplitContainer/Preview/TestTextOutput" method="set_performances_test_loops"]
+[connection signal="text_changed" from="HSplitContainer/TabContainer/Codex Test/VSplitContainer/TestTextInput" to="HSplitContainer/TabContainer/Codex Test/VSplitContainer/TestTextInput" method="_on_text_changed"]
+[connection signal="text_update" from="HSplitContainer/TabContainer/Codex Test/VSplitContainer/TestTextInput" to="HSplitContainer/TabContainer/Codex Test/VSplitContainer/Preview/TestTextOutput" method="_on_text_update"]
+[connection signal="text_update" from="HSplitContainer/TabContainer/Codex Test/VSplitContainer/TestTextInput" to="HSplitContainer/TabContainer/Codex Test/VSplitContainer/Preview/BottomBar/Parse" method="_on_text_update"]
+[connection signal="timeout" from="HSplitContainer/TabContainer/Codex Test/VSplitContainer/TestTextInput/UpdateTimer" to="HSplitContainer/TabContainer/Codex Test/VSplitContainer/TestTextInput" method="_update_text"]

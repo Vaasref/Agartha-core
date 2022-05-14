@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=2]
+[gd_scene load_steps=19 format=2]
 
 [ext_resource path="res://addons/Agartha/systems/Store.gd" type="Script" id=1]
 [ext_resource path="res://addons/Agartha/systems/Timeline.gd" type="Script" id=2]
@@ -17,6 +17,7 @@
 [ext_resource path="res://addons/Agartha/systems/StageManager.gd" type="Script" id=15]
 [ext_resource path="res://addons/Agartha/systems/Saver.gd" type="Script" id=16]
 [ext_resource path="res://addons/Agartha/systems/Director.gd" type="Script" id=17]
+[ext_resource path="res://addons/Agartha/systems/Codices.gd" type="Script" id=18]
 
 [node name="Agartha" type="Node"]
 script = ExtResource( 4 )
@@ -49,6 +50,9 @@ script = ExtResource( 8 )
 
 [node name="MarkupParser" type="Node" parent="."]
 script = ExtResource( 12 )
+
+[node name="Codices" type="Node" parent="."]
+script = ExtResource( 18 )
 
 [node name="ShardLibrarian" type="Node" parent="."]
 script = ExtResource( 11 )
