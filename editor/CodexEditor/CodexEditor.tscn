@@ -367,7 +367,8 @@ func _on_pending_changes(state):
 
 func _on_id_changed(new_id):
 	entry_id = new_id
-	self.disabled = not entry_id
+	if not entry_id:
+		self.disabled = true
 "
 
 [sub_resource type="GDScript" id=13]
