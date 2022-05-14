@@ -1,6 +1,7 @@
 extends Node
 
 onready var expr = Expression.new()
+onready var re = RegEx.new()
 
 func parse_text(text:String, store=null):
 	var output = text
@@ -17,7 +18,6 @@ func parse_text(text:String, store=null):
 func replace_store_variables(text:String, store):
 	if store:
 		var output = text
-		var re = RegEx.new()
 		re.compile("{(([a-zA-Z]|[a-zA-Z_][a-zA-Z_0-9]+)(\\.\\g<2>)*)}")
 		var results = re.search_all(text)
 		var offset = 0
@@ -42,7 +42,6 @@ func replace_store_variables(text:String, store):
 
 func replace_line_feed(text:String):
 	var output = text
-	var re = RegEx.new()
 	re.compile("(?<!\\\\)\\\\n")
 	var results = re.search_all(text)
 	var offset = 0
@@ -55,7 +54,6 @@ func replace_line_feed(text:String):
 
 func hidden_escape(text:String):
 	var output = text
-	var re = RegEx.new()
 	re.compile("(?<!\\\\)\\\\([^n\\\\])")
 	var results = re.search_all(text)
 	var offset = 0
